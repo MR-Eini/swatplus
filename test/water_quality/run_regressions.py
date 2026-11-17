@@ -27,7 +27,7 @@ def main():
     driver = '''
 program water_quality_regressions
   implicit none
-  real, external :: wq_semianalyt
+  real, external :: wq_semianalyt, wq_k2m
   real :: actual, tres, tdel, term_m, prock, previous, incoming
   double precision :: rate, exponential, expected
   ! exp(-80) is allowed by exp_w, but multiplying by 1e-5 underflows in REAL32.
@@ -48,6 +48,14 @@ program water_quality_regressions
   if (abs(dble(actual)-expected) > 1.d-6) error stop 'Normal-range analytic solution changed'
   actual = wq_semianalyt(1., 1., 0., 0., 0., 0.)
   if (actual /= 0.) error stop 'Zero concentration changed'
+  actual = wq_k2m(0.0125, 1., -0.1, 1.e-5, 0.)
+  expected = -dble(1.e-5)*dble(exp(-80.))/(dble(0.0125)*(1.d0-dble(exp(-80.))))
+  if (.not. (abs(dble(actual)-expected) <= abs(expected)*1.d-5)) error stop 'Tiny inverse-rate solution changed'
+  actual = wq_k2m(tres, tdel, prock, previous, incoming)
+  rate = 1.d0/dble(tres)-dble(prock)
+  expected = dble(previous)*exp(-dble(tdel)*rate) + (dble(incoming)/dble(tres))/rate*(1.d0-exp(-dble(tdel)*rate))
+  expected = (expected-dble(previous)*exp(-dble(tdel)/dble(tres)))/(dble(tres)*(1.d0-exp(-dble(tdel)/dble(tres))))-dble(incoming)/dble(tres)
+  if (abs(dble(actual)-expected)>1.d-5) error stop 'Normal inverse-rate solution changed'
   call sediment_decay_regressions()
   print *, 'PASS: decayed subnormal product avoids underflow with traps enabled'
   print *, 'PASS: incoming, normal-range analytic and zero-concentration cases'
@@ -85,6 +93,7 @@ end subroutine
         subprocess.run([compiler, '-cpp', '-O0', '-g', '-fcheck=all', '-fbacktrace',
                         '-ffpe-trap=invalid,zero,overflow,underflow', '-ffree-line-length-none',
                         str(root/'src/utils.f90'), str(root/'src/wq_semianalyt.f90'),
+                        str(root/'src/wq_k2m.f90'),
                         str(work/'driver.f90'), '-o', str(exe)], cwd=work, check=True)
         subprocess.run([str(exe)], cwd=work, check=True)
 

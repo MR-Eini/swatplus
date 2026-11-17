@@ -48,11 +48,11 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S . -B build -G "MinGW Makefiles" \
               "-DCMAKE_Fortran_COMPILER=$FC" \
-              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.3
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.4
           else
             cmake -S . -B build \
               "-DCMAKE_Fortran_COMPILER=$FC" \
-              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.3
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.4
           fi
           cmake --build build --parallel 4
       - name: Registered source regressions
@@ -63,13 +63,13 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          exe=$(find build -maxdepth 1 -type f -name 'swatplus-62.0.0-create.3-gnu-*-Rel*' | head -n 1)
+          exe=$(find build -maxdepth 1 -type f -name 'swatplus-62.0.0-create.4-gnu-*-Rel*' | head -n 1)
           python test/perennial/run_smoke.py --exe "$exe" --require-console 2>&1 | tee smoke.log
       - name: Record build provenance
         shell: bash
         run: |
           mkdir -p dist
-          cp build/swatplus-62.0.0-create.3-gnu-*-Rel* dist/
+          cp build/swatplus-62.0.0-create.4-gnu-*-Rel* dist/
           git rev-parse HEAD > dist/SOURCE_COMMIT.txt
           "$FC" --version > dist/COMPILER.txt
           cmake --version > dist/CMAKE_VERSION.txt
@@ -90,7 +90,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: swatplus-62-create3-${{ runner.os }}
+          name: swatplus-62-create4-${{ runner.os }}
           path: dist/
           if-no-files-found: error
           retention-days: 30

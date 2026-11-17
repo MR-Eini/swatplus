@@ -4,7 +4,7 @@ Baseline: upstream tag [`62.0.0`](https://github.com/swat-model/swatplus/release
 commit `de210d64db4f1d75e110bd6af33ea9c333d27b8a`.
 Primary branch: `MR-Eini/swatplus:main`.
 Original fix branch: `MR-Eini/swatplus:swatplus-62.0.0`.
-Current build identifier: `62.0.0-create.3` (a candidate identifier, not an upstream release).
+Current build identifier: `62.0.0-create.4` (a candidate identifier, not an upstream release).
 The earlier `create.1` includes the two perennial fixes but retains the output-record limit fixed below.
 `create.2` also fixes that output limit; `create.3` adds explicit closed-reservoir handling.
 `create.3` additionally contains the channel numerical/temperature fixes below,
@@ -162,6 +162,26 @@ unallocated incoming-object array.
 The regression compiles the actual count/mixing block and checks a channel
 at incoming index one, three tributaries interspersed with a routing unit,
 reordered inflows, zero-flow fallback and unallocated headwater inflows.
+
+## 7. Preserve tiny intermediate products in inverse channel rates
+
+Source: `src/wq_k2m.f90`.
+Patch: `patches/0007-channel-inverse-rate-underflow.patch`.
+
+The first full-period `create.3` test stopped on 2000-05-24 in `wq_k2m`.
+A focused regression reproduces the underflow in `c1 * help`, even where
+the subsequent division would bring the final inverse rate back into the
+normal single-precision range. `create.4` evaluates the inverse-rate
+expression in double precision, then converts normal-range final results
+to REAL and sets only below-normal final results to zero. The algebraic
+formula is unchanged; normal cases can differ by floating-point rounding.
+Unused forward-model evaluations (`h1`, `h3`) are removed, since their results
+did not affect the returned rate and could themselves introduce underflow.
+
+The extended water-quality regression checks the reproduced tiny intermediate
+case and a normal inverse-rate result against a double-precision analytic
+reference with all floating-point traps enabled. No model input or compiler
+runtime check is changed by this patch.
 
 ## Validation and remaining work
 

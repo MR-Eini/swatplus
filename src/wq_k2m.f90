@@ -32,20 +32,23 @@
       real, intent (in) :: tk
       real, intent (in) :: c1
       real, intent (in) :: c2
-      real :: h1 = 0.
       real :: h2 = 0.
       real :: help = 0.
       real :: tm = 0.
-      real :: h3 = 0.
+      double precision :: tm_full
       real :: wq_k2m
       real :: wq_semianalyt
       
-      h1 = wq_semianalyt (t1, t2, 0., 0., c1, c2)
       h2 = wq_semianalyt (t1, t2, 0., tk, c1, c2)
       help = exp_w(-t2 / t1)
          
-      tm = (h2 - c1 * help) / (t1 * (1. - help)) - c2 / t1
-      h3 = wq_semianalyt (t1, t2, tm, 0., c1, c2)
+      ! Keep tiny intermediate products representable until the inverse-rate
+      ! calculation is complete; division can bring them back into REAL's range.
+      tm_full = (dble(h2) - dble(c1) * dble(help)) / &
+          (dble(t1) * (1.d0 - dble(help))) - dble(c2) / dble(t1)
+      tm = 0.
+      if (abs(tm_full) >= dble(tiny(tm))) tm = real(tm_full)
+      ! The old h1/h3 evaluations were unused and could themselves underflow.
       wq_k2m = tm
 
       return

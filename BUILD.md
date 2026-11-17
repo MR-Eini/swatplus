@@ -25,7 +25,7 @@ Linux example:
 
 ```bash
 cmake -S . -B build -DCMAKE_Fortran_COMPILER=gfortran \
-  -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.3
+  -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.4
 cmake --build build --parallel 4
 python3 test/perennial/run_regressions.py --compiler gfortran
 python3 test/output_records/run_regressions.py --compiler gfortran
@@ -40,7 +40,7 @@ Windows PowerShell example with gfortran and mingw32-make on PATH:
 ```powershell
 cmake -S . -B build -G 'MinGW Makefiles' `
   '-DCMAKE_Fortran_COMPILER=gfortran' `
-  '-DCMAKE_BUILD_TYPE=Release' '-DTAG=62.0.0-create.3'
+  '-DCMAKE_BUILD_TYPE=Release' '-DTAG=62.0.0-create.4'
 cmake --build build --parallel 4
 python test/perennial/run_regressions.py --compiler gfortran
 python test/output_records/run_regressions.py --compiler gfortran
@@ -55,7 +55,7 @@ can instead use `-G 'MSYS Makefiles'` and an explicit
 `-DCMAKE_MAKE_PROGRAM=.../usr/bin/make.exe`. If CMake does not find Python,
 set `-DPython3_EXECUTABLE=.../python.exe` to register the focused CTest.
 
-The current binary name includes `62.0.0-create.3`, the compiler and the platform.
+The current binary name includes `62.0.0-create.4`, the compiler and the platform.
 Do not label a GNU build `ifo` (Intel Fortran Classic).
 
 `create.2` removes the explicit 80,000-character record limit for
@@ -111,7 +111,7 @@ Run an isolated, one-year copy of bundled Ames inputs with a newly built
 executable (substitute the actual platform-specific binary name):
 
 ```bash
-python3 test/perennial/run_smoke.py --exe build/swatplus-62.0.0-create.3-gnu-lin_x86_64-Rel --require-console
+python3 test/perennial/run_smoke.py --exe build/swatplus-62.0.0-create.4-gnu-lin_x86_64-Rel --require-console
 ```
 
 The driver removes copied completion markers and logs, runs only the first
