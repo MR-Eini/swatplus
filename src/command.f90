@@ -326,9 +326,8 @@
 
           case ("res")   ! reservoir
             ires = ob(icmd)%num
-            if (ob(icmd)%rcv_tot > 0) then
-              call res_control (ires)
-            end if 
+            ! A closed/headwater reservoir still has precipitation, evaporation and seepage.
+            call res_control (ires)
               
           case ("recall")   ! recall hydrograph
             irec = ob(icmd)%num

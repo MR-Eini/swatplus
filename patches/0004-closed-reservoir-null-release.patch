@@ -1,0 +1,78 @@
+diff --git a/src/command.f90 b/src/command.f90
+index b3770a2..a576eb3 100644
+--- a/src/command.f90
++++ b/src/command.f90
+@@ -326,9 +326,8 @@
+ 
+           case ("res")   ! reservoir
+             ires = ob(icmd)%num
+-            if (ob(icmd)%rcv_tot > 0) then
+-              call res_control (ires)
+-            end if 
++            ! A closed/headwater reservoir still has precipitation, evaporation and seepage.
++            call res_control (ires)
+               
+           case ("recall")   ! recall hydrograph
+             irec = ob(icmd)%num
+@@ -693,4 +692,4 @@
+ 8102  format(4i6,2i8,a18,7e13.4)      
+ 
+       return
+-      end subroutine command
+\ No newline at end of file
++      end subroutine command
+diff --git a/src/res_control.f90 b/src/res_control.f90
+index 28a56ce..8e15d67 100644
+--- a/src/res_control.f90
++++ b/src/res_control.f90
+@@ -122,9 +122,26 @@
+ 
+         !! perform reservoir water/sediment balance
+         idat = res_ob(jres)%props
+-        if(res_ob(jres)%rel_tbl == "d") then
++        if (trim(res_dat_c(idat)%release) == "null" .or. trim(res_dat_c(idat)%release) == "NULL") then
++          ! Explicitly closed reservoirs have no controlled surface release.
++          ! Aquifer recharge links remain active through the normal seepage balance.
++          do ii = 1, ob(iob)%src_tot
++            if (ob(iob)%obtyp_out(ii) /= "aqu" .or. ob(iob)%htyp_out(ii) /= "rhg") then
++              write (*,'(a,i0,a)') "Reservoir ", jres, &
++                  " has rel=null but an outgoing link other than aquifer recharge."
++              error stop "A reservoir with a surface outlet requires a release rule"
++            end if
++          end do
++          res_ob(jres)%prev_flo = 0.
++          call res_sediment
++        else if(res_ob(jres)%rel_tbl == "d") then
+           !! determine reservoir outflow
+           irel = res_dat(idat)%release
++          if (irel <= 0) then
++            write (*,'(a,i0,2a)') "Reservoir ", jres, " has an unknown release table: ", &
++                trim(res_dat_c(idat)%release)
++            error stop "Reservoir release table was not found"
++          end if
+           d_tbl => dtbl_res(irel)
+           pvol_m3 = res_ob(jres)%pvol
+           evol_m3 = res_ob(jres)%evol
+diff --git a/src/res_read.f90 b/src/res_read.f90
+index f853753..1214139 100644
+--- a/src/res_read.f90
++++ b/src/res_read.f90
+@@ -158,7 +158,10 @@
+          
+ 
+        if (res_dat(ires)%hyd == 0) write (9001,*) res_dat_c(ires)%hyd, " not found (res-hyd)"
+-       if (res_dat(ires)%release == 0) write (9001,*) res_dat_c(ires)%release, " not found (res-release)"         
++       if (res_dat(ires)%release == 0 .and. trim(res_dat_c(ires)%release) /= "null" .and. &
++           trim(res_dat_c(ires)%release) /= "NULL") then
++         write (9001,*) res_dat_c(ires)%release, " not found (res-release)"
++       end if
+        if (res_dat(ires)%sed == 0) write (9001,*) res_dat_c(ires)%sed, " not found (res-sed)"
+        if (res_dat(ires)%nut == 0) write (9001,*) res_dat_c(ires)%nut, " not found (res-nut)"
+        end do
+@@ -169,4 +172,4 @@
+       endif
+       
+       return
+-      end subroutine res_read
+\ No newline at end of file
++      end subroutine res_read

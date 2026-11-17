@@ -158,7 +158,10 @@
          
 
        if (res_dat(ires)%hyd == 0) write (9001,*) res_dat_c(ires)%hyd, " not found (res-hyd)"
-       if (res_dat(ires)%release == 0) write (9001,*) res_dat_c(ires)%release, " not found (res-release)"         
+       if (res_dat(ires)%release == 0 .and. trim(res_dat_c(ires)%release) /= "null" .and. &
+           trim(res_dat_c(ires)%release) /= "NULL") then
+         write (9001,*) res_dat_c(ires)%release, " not found (res-release)"
+       end if
        if (res_dat(ires)%sed == 0) write (9001,*) res_dat_c(ires)%sed, " not found (res-sed)"
        if (res_dat(ires)%nut == 0) write (9001,*) res_dat_c(ires)%nut, " not found (res-nut)"
        end do

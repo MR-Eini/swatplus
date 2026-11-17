@@ -122,9 +122,26 @@
 
         !! perform reservoir water/sediment balance
         idat = res_ob(jres)%props
-        if(res_ob(jres)%rel_tbl == "d") then
+        if (trim(res_dat_c(idat)%release) == "null" .or. trim(res_dat_c(idat)%release) == "NULL") then
+          ! Explicitly closed reservoirs have no controlled surface release.
+          ! Aquifer recharge links remain active through the normal seepage balance.
+          do ii = 1, ob(iob)%src_tot
+            if (ob(iob)%obtyp_out(ii) /= "aqu" .or. ob(iob)%htyp_out(ii) /= "rhg") then
+              write (*,'(a,i0,a)') "Reservoir ", jres, &
+                  " has rel=null but an outgoing link other than aquifer recharge."
+              error stop "A reservoir with a surface outlet requires a release rule"
+            end if
+          end do
+          res_ob(jres)%prev_flo = 0.
+          call res_sediment
+        else if(res_ob(jres)%rel_tbl == "d") then
           !! determine reservoir outflow
           irel = res_dat(idat)%release
+          if (irel <= 0) then
+            write (*,'(a,i0,2a)') "Reservoir ", jres, " has an unknown release table: ", &
+                trim(res_dat_c(idat)%release)
+            error stop "Reservoir release table was not found"
+          end if
           d_tbl => dtbl_res(irel)
           pvol_m3 = res_ob(jres)%pvol
           evol_m3 = res_ob(jres)%evol
