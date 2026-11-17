@@ -2,7 +2,8 @@
 
 ## Reproducible source and toolchain
 
-Start from this branch, not the latest upstream main. The official baseline
+Start from `MR-Eini/swatplus:main` (or the original `swatplus-62.0.0` fix
+branch), not the latest upstream main. The official baseline
 and individual changes are recorded in [PATCHES.md](PATCHES.md). Record the
 exact checked-out commit for every executable:
 
@@ -116,12 +117,18 @@ the inputs in this release are under `refdata/Ames_sub1`; this branch does
 not claim that the existing full reference-output CTest passed.
 
 The `CREATE rev 62 perennial fixes` GitHub Actions workflow checks out the
-branch, tests and compiles it on Windows/Linux using GCC 13, then uploads
+branch, runs on changes to `main` and `swatplus-62.0.0`, tests and compiles
+it on Windows/Linux using GCC 13, then uploads
 candidate artifacts with source commit, compiler version, CMake cache,
 documentation, smoke log/outcome and SHA-256 checksums. The smoke step is
 diagnostic (not a required passing step). Artifact availability is not
 production-readiness or SWATdoctR compatibility certification. No release
 is automatically published.
+
+This repository uses the CREATE workflow for its required focused tests and
+candidate builds. The inherited Intel workflow in `test.yml` is restricted
+to the upstream repository; it references the upstream legacy full-model
+test configuration rather than this branch's focused validation procedure.
 
 ## Before updating the portable workflow
 

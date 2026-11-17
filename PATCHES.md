@@ -2,7 +2,8 @@
 
 Baseline: upstream tag [`62.0.0`](https://github.com/swat-model/swatplus/releases/tag/62.0.0),
 commit `de210d64db4f1d75e110bd6af33ea9c333d27b8a`.
-Branch: `MR-Eini/swatplus:swatplus-62.0.0`.
+Primary branch: `MR-Eini/swatplus:main`.
+Original fix branch: `MR-Eini/swatplus:swatplus-62.0.0`.
 Build identifier: `62.0.0-create.1` (a candidate identifier, not an upstream release).
 
 The source files already contain these fixes. The files under `patches/`

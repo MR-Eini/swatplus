@@ -2,7 +2,7 @@ name: CREATE rev 62 perennial fixes
 
 on:
   push:
-    branches: [swatplus-62.0.0]
+    branches: [main, swatplus-62.0.0]
     paths:
       - 'src/**'
       - 'CMakeLists.txt'
