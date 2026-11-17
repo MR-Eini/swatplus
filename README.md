@@ -3,7 +3,7 @@
 # SWAT+
 
 The `main` branch maintains the official **62.0.0** source plus
-two documented CREATE perennial-plant fixes. It is not the upstream latest
+documented CREATE fixes for perennial plants and large catchments. It is not the upstream latest
 version. See [PATCHES.md](PATCHES.md) for behavior and validation limits and
 [BUILD.md](BUILD.md) for reproducible builds and deployment checks.
 

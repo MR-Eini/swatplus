@@ -1,10 +1,11 @@
-# CREATE perennial fixes for SWAT+ 62.0.0
+# CREATE fixes for SWAT+ 62.0.0
 
 Baseline: upstream tag [`62.0.0`](https://github.com/swat-model/swatplus/releases/tag/62.0.0),
 commit `de210d64db4f1d75e110bd6af33ea9c333d27b8a`.
 Primary branch: `MR-Eini/swatplus:main`.
 Original fix branch: `MR-Eini/swatplus:swatplus-62.0.0`.
-Build identifier: `62.0.0-create.1` (a candidate identifier, not an upstream release).
+Current build identifier: `62.0.0-create.2` (a candidate identifier, not an upstream release).
+The earlier `create.1` includes the two perennial fixes but retains the output-record limit fixed below.
 
 The source files already contain these fixes. The files under `patches/`
 are copies for review or application to a clean baseline; do not apply them
@@ -64,6 +65,27 @@ retained. The zero/negative-days calculations and their existing 365-day
 annual sums are unchanged. Positive-day wrapping deliberately follows
 `xmon`'s active month table (365 or 366), rather than an independent fixed
 365-day wrap. `xmon` itself is unchanged.
+
+## 3. Allow large drainage-area diagnostic records
+
+Source: `src/proc_bsn.f90`.
+Patch: `patches/0003-area-diagnostic-record-length.patch`.
+
+`hyd_connect` writes each object's incoming connections to one list-directed
+record in `area_calc.out`. The original OPEN sets `RECL=80000`. An aquifer
+receiving 15,136 routing units exceeds that limit and GNU Fortran aborts with
+"End of record" while writing the diagnostic, before plant initialization.
+
+The fix omits the explicit record length only for `area_calc.out`, using the
+existing output-path wrapper's default sequential formatted OPEN. It preserves
+the write format and every incoming connection rather than truncating or
+splitting the diagnostic. No routing, drainage-area or plant equations change.
+
+`test/output_records/run_regressions.py` compiles the actual output-path module,
+the OPEN statement from `proc_bsn` and the diagnostic WRITE block from
+`hyd_connect`. A synthetic object with 15,136 incoming routing units writes
+1,195,820 bytes under local GNU Fortran 14.3.0, preserving every incoming ID.
+The same test against the unmodified source fails at the old record limit.
 
 ## Validation and remaining work
 
