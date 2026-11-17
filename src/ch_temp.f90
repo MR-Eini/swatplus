@@ -92,6 +92,7 @@
       real :: trib1_flo
       real :: trib2_flo
       real :: trib_flo
+      real :: trib_heat
       real :: tw_def
       real :: tw_mix
       real :: tw_eq
@@ -123,11 +124,7 @@
       ru_count = 0
       ru_index = 1
 
-      do in = 1, size(ob(iob)%obtyp_in)
-          if (allocated(ob(iob)%obtyp_in) .and. ob(iob)%obtyp_in(in) == "ru") then
-              ru_count = count(ob(iob)%obtyp_in == "ru")
-          end if
-      end do
+      if (allocated(ob(iob)%obtyp_in)) ru_count = count(ob(iob)%obtyp_in == "ru")
       
       if (allocated(ruid_array)) deallocate(ruid_array)
       allocate(ruid_array(ru_count))
@@ -136,29 +133,24 @@
       !  Step 2. Tributary mixing
       ! =========================================================
       
-      ! summing the temperature of the incoming tributaries (maximum 2)    
+      ! Flow-weighted temperature of all incoming channel tributaries.
       
       ht1 = ob(iob)%hd(1)
+      trib_flo = 0.
+      trib_heat = 0.
       do in = 1, ob(iob)%rcv_tot
           if (ob(iob)%obtyp_in(in) == "chandeg") then
-              trib1_temp = ob(iob)%hin_d(in-1)%temp
-              trib2_temp = ob(iob)%hin_d(in)%temp
-              trib1_flo = ob(iob)%hin_d(in-1)%flo/86400
-              trib2_flo = ob(iob)%hin_d(in)%flo/86400
-              trib_flo = trib1_flo + trib2_flo
-              if (trib_flo < 1e-6) then             ! if it has tributaries but the flows are 0, estimate from old equation (to avoid division by 0)
-                  ht1%temp = 5.0 + 0.75 * w%tave
-              else
-                  ht1%temp = (trib1_temp * trib1_flo + trib2_temp * trib2_flo) / trib_flo
-              end if
-          else                  ! if it does not have any tributaries, also use old equation to avoid 0
-              ht1%temp = 5.0 + 0.75 * w%tave
+              trib1_flo = max(0., ob(iob)%hin_d(in)%flo / 86400.)
+              trib_flo = trib_flo + trib1_flo
+              trib_heat = trib_heat + ob(iob)%hin_d(in)%temp * trib1_flo
           end if
           if (ob(iob)%obtyp_in(in) == "ru") then            ! get lsu ID 
               ruid_array(ru_index) = ob(iob)%obtypno_in(in)
               ru_index = ru_index + 1
           end if
       end do  
+      ht1%temp = tw_def
+      if (trib_flo >= 1.e-6) ht1%temp = trib_heat / trib_flo
       
       ! =========================================================
       !  Step 3. mixing of components
@@ -234,7 +226,7 @@
       
       ! ---------------------calculate average temperature of the previous x days ------------------------------------
       if (ig <= 0) then
-        ! no temperature gage assigned — fall back to default
+        ! no temperature gage assigned â€” fall back to default
         tw_local = tw_def
         goto 900
       endif
@@ -450,4 +442,3 @@
     
       return    
 	end subroutine ch_temp
-	
