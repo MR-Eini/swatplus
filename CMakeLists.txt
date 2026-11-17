@@ -197,6 +197,9 @@ if(Python3_Interpreter_FOUND AND CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     add_test(NAME Channel_tributary_temperature
         COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/channel_temperature/run_regressions.py
             --compiler ${CMAKE_Fortran_COMPILER})
+    add_test(NAME Plant_leaf_limits
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/plant_leaf/run_regressions.py
+            --compiler ${CMAKE_Fortran_COMPILER})
 endif()
 # add_test(Ithaca_sub6 python3 ${check_py} ${exe_path} ${ref_dir}/Ithaca_sub6 ${test_dir} ${aerr} ${rerr})
 

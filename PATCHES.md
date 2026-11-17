@@ -4,7 +4,7 @@ Baseline: upstream tag [`62.0.0`](https://github.com/swat-model/swatplus/release
 commit `de210d64db4f1d75e110bd6af33ea9c333d27b8a`.
 Primary branch: `MR-Eini/swatplus:main`.
 Original fix branch: `MR-Eini/swatplus:swatplus-62.0.0`.
-Current build identifier: `62.0.0-create.4` (a candidate identifier, not an upstream release).
+Current build identifier: `62.0.0-create.5` (a candidate identifier, not an upstream release).
 The earlier `create.1` includes the two perennial fixes but retains the output-record limit fixed below.
 `create.2` also fixes that output limit; `create.3` adds explicit closed-reservoir handling.
 `create.3` additionally contains the channel numerical/temperature fixes below,
@@ -182,6 +182,24 @@ The extended water-quality regression checks the reproduced tiny intermediate
 case and a normal inverse-rate result against a double-precision analytic
 reference with all floating-point traps enabled. No model input or compiler
 runtime check is changed by this patch.
+
+## 8. Take safe exponential limits in leaf-growth curves
+
+Source: `src/pl_leaf_gro.f90`.
+Patch: `patches/0008-leaf-growth-exponential-limits.patch`.
+
+The full-period `create.4` run passed the previous channel-rate failure but
+stopped on 2000-05-27 in the annual leaf-area logistic exponential. The three
+active leaf-growth exponential calls now use the existing `utils::exp_w`
+helper. This preserves ordinary curve calculations and takes the near-zero
+exponential limit for strongly negative arguments, avoiding a fatal underflow
+with the upstream Windows runtime checks. The heat-unit and LAI equations,
+their parameters and the existing perennial exponent floor are retained.
+
+The regression compiles the actual complete leaf-growth routine with fixture
+modules and all floating-point traps enabled. It checks the high-heat-unit
+logistic limit, a large canopy-gap limit and normal logistic/LAI increments.
+The unmodified routine fails the extreme-argument test with underflow.
 
 ## Validation and remaining work
 

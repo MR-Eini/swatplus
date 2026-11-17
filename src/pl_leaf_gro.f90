@@ -63,6 +63,7 @@
       use plant_module
       use carbon_module
       use organic_mineral_mass_module
+      use utils, only : exp_w
       
       implicit none 
       
@@ -84,7 +85,7 @@
       idp = pcom(j)%plcur(ipl)%idplt
       
           f = pcom(j)%plcur(ipl)%phuacc / (pcom(j)%plcur(ipl)%phuacc +                  &
-              Exp(plcp(idp)%leaf1 - plcp(idp)%leaf2 * pcom(j)%plcur(ipl)%phuacc))
+              exp_w(plcp(idp)%leaf1 - plcp(idp)%leaf2 * pcom(j)%plcur(ipl)%phuacc))
           pcom(j)%plg(ipl)%laimxfr = amin1 (f, pcom(j)%plg(ipl)%laimxfr)    !dormancy and grazing lower phuacc
           ff = f - pcom(j)%plg(ipl)%laimxfr
           pcom(j)%plg(ipl)%laimxfr = f
@@ -97,7 +98,7 @@
           !     Exp(plcp(idp)%leaf1 - plcp(idp)%leaf2 * pcom(j)%plcur(ipl)%phuacc_p))
 
           f_p = pcom(j)%plcur(ipl)%phuacc_p / (pcom(j)%plcur(ipl)%phuacc_p +            &  ! fg change
-              Exp(exponent))
+              exp_w(exponent))
 
           !pcom(j)%plg(ipl)%laimxfr_p = amin1 (f_p, pcom(j)%plg(ipl)%laimxfr_p)
           !ff_p = f_p - pcom(j)%plg(ipl)%laimxfr_p
@@ -132,7 +133,7 @@
             
             if (pcom(j)%plg(ipl)%lai > laimax) pcom(j)%plg(ipl)%lai = laimax
             !! only apply water stress to lai            
-            deltalai = ff * laimax * (1.0 - Exp(5.0 * (pcom(j)%plg(ipl)%lai - laimax))) * Sqrt(pcom(j)%plstr(ipl)%strsw)
+            deltalai = ff * laimax * (1.0 - exp_w(5.0 * (pcom(j)%plg(ipl)%lai - laimax))) * Sqrt(pcom(j)%plstr(ipl)%strsw)
             !! adjust lai increment for plant competition
             sumlaiht = 0.
             do jpl = 1, pcom(j)%npl

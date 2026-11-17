@@ -11,6 +11,7 @@ on:
       - 'test/closed_reservoirs/**'
       - 'test/water_quality/**'
       - 'test/channel_temperature/**'
+      - 'test/plant_leaf/**'
       - '.github/workflows/create-perennial-fixes.yml'
   workflow_dispatch:
 
@@ -42,34 +43,35 @@ jobs:
           python test/closed_reservoirs/run_regressions.py --compiler "$FC"
           python test/water_quality/run_regressions.py --compiler "$FC"
           python test/channel_temperature/run_regressions.py --compiler "$FC"
+          python test/plant_leaf/run_regressions.py --compiler "$FC"
       - name: Configure and compile the complete model
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S . -B build -G "MinGW Makefiles" \
               "-DCMAKE_Fortran_COMPILER=$FC" \
-              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.4
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.5
           else
             cmake -S . -B build \
               "-DCMAKE_Fortran_COMPILER=$FC" \
-              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.4
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.5
           fi
           cmake --build build --parallel 4
       - name: Registered source regressions
         shell: bash
-        run: ctest --test-dir build -R '^(Perennial_initialization|Large_area_record|Closed_reservoir|Water_quality_decay|Channel_tributary_temperature)$' --output-on-failure --no-tests=error
+        run: ctest --test-dir build -R '^(Perennial_initialization|Large_area_record|Closed_reservoir|Water_quality_decay|Channel_tributary_temperature|Plant_leaf_limits)$' --output-on-failure --no-tests=error
       - name: One-year Ames smoke run and console capture
         id: smoke
         continue-on-error: true
         shell: bash
         run: |
-          exe=$(find build -maxdepth 1 -type f -name 'swatplus-62.0.0-create.4-gnu-*-Rel*' | head -n 1)
+          exe=$(find build -maxdepth 1 -type f -name 'swatplus-62.0.0-create.5-gnu-*-Rel*' | head -n 1)
           python test/perennial/run_smoke.py --exe "$exe" --require-console 2>&1 | tee smoke.log
       - name: Record build provenance
         shell: bash
         run: |
           mkdir -p dist
-          cp build/swatplus-62.0.0-create.4-gnu-*-Rel* dist/
+          cp build/swatplus-62.0.0-create.5-gnu-*-Rel* dist/
           git rev-parse HEAD > dist/SOURCE_COMMIT.txt
           "$FC" --version > dist/COMPILER.txt
           cmake --version > dist/CMAKE_VERSION.txt
@@ -90,7 +92,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: swatplus-62-create4-${{ runner.os }}
+          name: swatplus-62-create5-${{ runner.os }}
           path: dist/
           if-no-files-found: error
           retention-days: 30
