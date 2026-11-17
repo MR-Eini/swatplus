@@ -49,6 +49,32 @@ set `-DPython3_EXECUTABLE=.../python.exe` to register the focused CTest.
 The binary name includes `62.0.0-create.1`, the compiler and the platform.
 Do not label a GNU build `ifo` (Intel Fortran Classic).
 
+### Verified comparison with the official Windows executable
+
+On 2026-11-17, the Windows candidate from source commit
+`5540b843f34e854dab527079765fcbfaa6084df8` was downloaded from
+[the completed GitHub build](https://github.com/MR-Eini/swatplus/actions/runs/44046531380)
+and checked against its SHA-256 manifest. Its banner reports **GNU 13.2.0,
+Windows**, exactly the compiler version/platform reported by the executable
+in the [official 62.0.0 Windows ZIP](https://github.com/swat-model/swatplus/releases/download/62.0.0/swatplus-62.0.0-gnu-win_amd64-Rel.zip).
+Both PE headers identify x86-64. The candidate uses the upstream GCC 13 /
+MinGW Makefiles / Release procedure and unchanged model compiler flags,
+with the two scientific patches and a distinct version banner.
+
+Verified SHA-256 values:
+
+- Official ZIP: `05f09dab8f241219113ed715723b674d1dc44900c3bf8c563657b7a4343e5e61`
+- Official EXE: `e757daf64a597ca2da80f12ff6a0075c4e8260c6fcf871f8da979aef21a37db3`
+- Patched EXE: `94f6270aa6d27451b31aa75b30163b64b4325a6299212dd7c88f7ff14595c911`
+
+The official, downloaded executable itself also fails the isolated Ames
+smoke run at `hyd_read_connect.f90:338` with an `ob(0)` bounds error, matching
+the patched Windows candidate. This extends the source-baseline comparison
+below to the actual upstream distributed binary. Neither early failing run
+created fort.6; that does not establish successful full-run or native
+SWATdoctR compatibility. The candidate still requires representative-case
+validation before deployment.
+
 ## Tests and diagnostic smoke run
 
 The focused driver compiles actual source blocks with bounds checking and
