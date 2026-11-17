@@ -165,6 +165,20 @@ reordered inflows, zero-flow fallback and unallocated headwater inflows.
 
 ## Validation and remaining work
 
+### CREATE.3 closed-reservoir integration check
+
+The GNU Fortran 13.2.0 Windows Release build from source commit
+`6c4c40233734c55540c57bd08d923ba0e12fcd45` completed a 32-day copied-case run
+(2000-01-01 through 2000-02-01) with a fresh success marker and exit code zero.
+All original model files were retained unchanged. Daily outputs contain
+8,256 reservoir records (258 reservoirs times 32 days). All 224 intentional
+null-release reservoirs have zero controlled surface outflow, with nonzero
+precipitation, evaporation and seepage over the test period. The other 34
+retain their existing named release rules. A full multi-year run has not
+been performed. The five focused suites and full compilation passed on
+Windows and Linux in [run 44062914565](https://github.com/MR-Eini/swatplus/actions/runs/44062914565).
+The separate bundled Ames diagnostic limitations below remain applicable.
+
 `test/perennial/run_regressions.py` compiles the actual PHU calculation and
 LAI-update source blocks, together with the unchanged `src/xmon.f90`, against
 small fixture structures. It checks:
