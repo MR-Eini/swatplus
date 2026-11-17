@@ -35,7 +35,8 @@
       integer :: isched = 0          !           |
       integer :: iop = 0             !none       |management operation counter 
       integer :: irot = 0            !none       |rotation year counter 
-      integer :: igrow = 0           !none       |julian day growth begins
+      integer :: igrow               !none       |julian day growth begins; assigned for each plant
+      logical :: grow_start_found    !           |a growth start was found for this plant
       integer :: iday_sum = 0        !none       |day for southern hemisphere (182-181)
       integer :: iday_sh = 0         !none       |julian day growth begins in souther hemisphere
       integer :: jday_prev = 0       !none       |julian day of previous operation
@@ -143,6 +144,13 @@
           iob = hru(j)%obj_no
           iwst = ob(iob)%wst
           iwgn = wst(iwst)%wco%wgn
+          ! Declaration initialization implies SAVE: choose a fresh, valid day for every plant.
+          ! These defaults also cover an unsuccessful planting/dormancy search.
+          if (wgn(iwgn)%lat > 0.) then
+            igrow = 1
+          else
+            igrow = 181
+          end if
           phu0 = 0.
           do iday = 1, 365
             call xmon (iday, mo, day_mo)
@@ -169,6 +177,7 @@
             pcom(j)%plcur(ipl)%phumat = -pcom(j)%plcur(ipl)%phumat
           else
             ! if positive assume days to maturity
+            grow_start_found = .false.
             ! calculate planting day for summer annuals
             if (pldb(idp)%typ == "warm_annual" .or. pldb(idp)%typ == "warm_annual_tuber" .or.   &
                 pldb(idp)%typ == "cold_annual" .or. pldb(idp)%typ == "cold_annual_tuber") then
@@ -199,18 +208,15 @@
                   else
                     igrow = iday_sh
                   end if
+                  grow_start_found = .true.
                   exit   ! exit on plant day at 0.15 base 0 heat units
                 end if
               end do
             end if
           
-            ! switched from starting hu at dormancy (daylength) to 0.15 hu (above) like summer annuals
-            if (pldb(idp)%typ == "null" .or. pldb(idp)%typ == "null1") then
-              if (wgn(iwgn)%lat > 0.) then
-                igrow = 1
-              else
-                igrow = 181
-              end if
+            ! Perennials start accumulating heat units at the end of daylength dormancy.
+            if (pldb(idp)%typ == "null" .or. pldb(idp)%typ == "null1" .or. &
+                pldb(idp)%typ == "perennial") then
               do iday = igrow, igrow + 180
                 call xmon (iday, mo, day_mo)
                 tave = (wgn(iwgn)%tmpmx(mo) + wgn(iwgn)%tmpmn(mo)) / 2.
@@ -230,26 +236,26 @@
                     h = 3.1416         !! latitude exceeds +/- 66.5 deg in summer
                   endif 
                   daylength = 7.6394 * h
-                  if (daylength - wgn_pms(iwgn)%daylth >= wgn_pms(iwgn)%daylmn) exit
+                  if (daylength - wgn_pms(iwgn)%daylth >= wgn_pms(iwgn)%daylmn) then
+                    igrow = iday
+                    grow_start_found = .true.
+                    exit
+                  end if
                 !end if
               end do
-              igrow = iday
+            end if
+
+            if (.not. grow_start_found) then
+              write (*,'(a,i0,a,i0,a,i0)') "plant_init: no growth start found for HRU ", j, &
+                  ", plant ", idp, "; using fallback day ", igrow
             end if
             
             ! calculate heat units from plant day (iday) to maturity (add days to maturity)
             phutot = 0.
             do iday = igrow, igrow + pldb(idp)%days_mat
-              if (wgn(iwgn)%lat > 0.) then
-                call xmon (iday, mo, day_mo)
-              else
-                ! find Southern Hemisphere day
-                if (iday > 365) then
-                  iday_sh = iday - 365
-                else
-                  iday_sh = iday
-                end if
-                call xmon (iday_sh, mo, day_mo)
-              end if
+              ! Match xmon's active calendar, in either hemisphere and over any year boundary.
+              iday_sh = modulo (iday - 1, ndays(13)) + 1
+              call xmon (iday_sh, mo, day_mo)
               tave = (wgn(iwgn)%tmpmx(mo) + wgn(iwgn)%tmpmn(mo)) / 2.
               phuday = tave - pldb(idp)%t_base
               if (phuday > 0.) then
