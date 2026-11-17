@@ -40,14 +40,22 @@
       real :: term1 = 0.
       real :: term2 = 0.
       real :: yy = 0.
+      double precision :: product
       real :: wq_semianalyt
 
       help1 = 1. / tres - prock
       help2 = exp_w(-tdel * help1)
       help3 = cint / tres + term_m
       help4 = help3 / help1
-      term1 = cprev * help2
-      term2 = help4 * (1. - help2)
+      ! A decayed concentration can be below the normal single-precision range
+      ! even though exp_w itself is safe. Test each product in double precision
+      ! before converting, so negligible subnormal terms do not trap underflow.
+      product = dble(cprev) * dble(help2)
+      term1 = 0.
+      if (abs(product) >= dble(tiny(term1))) term1 = real(product)
+      product = dble(help4) * dble(1. - help2)
+      term2 = 0.
+      if (abs(product) >= dble(tiny(term2))) term2 = real(product)
       yy = term1 + term2
       wq_semianalyt = term1 + term2
       

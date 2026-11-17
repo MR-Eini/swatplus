@@ -126,7 +126,7 @@
         !! trap efficiency from Dynamic SedNet Component Model Reference Guide: Update 2017
         fp_m2 = 3. * sd_ch(ich)%chw * sd_ch(ich)%chl * 1000.
         exp_co = 0.0001 * fp_m2 / florate_ob
-        trap_eff = sd_ch(ich)%fp_inun_days * (florate_ob / ave_rate) * (1. - exp(-exp_co))
+        trap_eff = sd_ch(ich)%fp_inun_days * (florate_ob / ave_rate) * (1. - exp_w(-exp_co))
         trap_eff = Min (1., trap_eff)
         fp_dep%sed = trap_eff * ht1%sed
 
@@ -174,7 +174,7 @@
       cohesion = (-87.1 + (42.82 * sd_ch(ich)%ch_clay) - (0.261 * sd_ch(ich)%ch_clay ** 2.) &
                                      + (0.029 * sd_ch(ich)%ch_clay ** 3.))
       cohesion = amax1 (1000., cohesion)    !min 1000 for sandy soils
-      veg = exp (-5. * sd_ch(ich)%chd) * 4500. * sd_ch(ich)%cov
+      veg = exp_w (-5. * sd_ch(ich)%chd) * 4500. * sd_ch(ich)%cov
       bd_fac = Max (0.001, 0.03924 * sd_ch(ich)%ch_bd * 1000. - 1000.)
       cohes_fac = 0.021 * cohesion + veg
       vel_cr = log10 (2200. * sd_ch(ich)%chd) * (0.0004 * (bd_fac + cohes_fac)) ** 0.5
