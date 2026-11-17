@@ -181,6 +181,11 @@ set(rerr "0.01")
 set(aerr "1e-8")
 
 add_test(Ames_sub1   ${Python3_EXECUTABLE} ${spcheck} ctest ${exe_path} ${ref_dir}/Ames_sub1 ${test_dir} --abserr ${aerr} --relerr ${rerr})
+if(Python3_Interpreter_FOUND AND CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    add_test(NAME Perennial_initialization
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/perennial/run_regressions.py
+            --compiler ${CMAKE_Fortran_COMPILER})
+endif()
 # add_test(Ithaca_sub6 python3 ${check_py} ${exe_path} ${ref_dir}/Ithaca_sub6 ${test_dir} ${aerr} ${rerr})
 
 

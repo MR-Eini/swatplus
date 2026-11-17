@@ -2,6 +2,11 @@
 
 # SWAT+
 
+This branch, `swatplus-62.0.0`, maintains the official **62.0.0** source plus
+two documented CREATE perennial-plant fixes. It is not the upstream latest
+version. See [PATCHES.md](PATCHES.md) for behavior and validation limits and
+[BUILD.md](BUILD.md) for reproducible builds and deployment checks.
+
 The **Soil and Water Assessment Tool Plus** [SWAT+](https://swatplus.gitbook.io/docs) is an open source model jointly developed by the USDA Agricultural Research Service ([USDA-ARS](http://ars.usda.gov)) and Texas A&M AgriLife Research, part of The Texas A&M University System. Model contributions have been made by Colorado State University and others. SWAT+ is a small watershed to river basin-scale model to simulate the quality and quantity of surface and ground water and predict the environmental impact of land use, land management practices, and climate change. SWAT is widely used in assessing soil erosion prevention and control, non-point source pollution control and regional management in watersheds.
 
 This repository contains the latest SWAT+ source code and some test data to create and test the executable for various compiler and platforms. 

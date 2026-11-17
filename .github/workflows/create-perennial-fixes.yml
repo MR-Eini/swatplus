@@ -1,0 +1,87 @@
+name: CREATE rev 62 perennial fixes
+
+on:
+  push:
+    branches: [swatplus-62.0.0]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'test/perennial/**'
+      - '.github/workflows/create-perennial-fixes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: '13'
+      - name: Focused source regressions
+        shell: bash
+        run: python test/perennial/run_regressions.py --compiler "$FC"
+      - name: Configure and compile the complete model
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake -S . -B build -G "MinGW Makefiles" \
+              "-DCMAKE_Fortran_COMPILER=$FC" \
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.1
+          else
+            cmake -S . -B build \
+              "-DCMAKE_Fortran_COMPILER=$FC" \
+              -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.1
+          fi
+          cmake --build build --parallel 4
+      - name: Registered perennial regressions
+        shell: bash
+        run: ctest --test-dir build -R '^Perennial_initialization$' --output-on-failure --no-tests=error
+      - name: One-year Ames smoke run and console capture
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          exe=$(find build -maxdepth 1 -type f -name 'swatplus-62.0.0-create.1-gnu-*-Rel*' | head -n 1)
+          python test/perennial/run_smoke.py --exe "$exe" --require-console 2>&1 | tee smoke.log
+      - name: Record build provenance
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp build/swatplus-62.0.0-create.1-gnu-*-Rel* dist/
+          git rev-parse HEAD > dist/SOURCE_COMMIT.txt
+          "$FC" --version > dist/COMPILER.txt
+          cmake --version > dist/CMAKE_VERSION.txt
+          cp build/CMakeCache.txt dist/
+          cp PATCHES.md BUILD.md dist/
+          cp smoke.log dist/
+          echo '${{ steps.smoke.outcome }}' > dist/SMOKE_OUTCOME.txt
+          printf '%s\n' 'Candidate build: focused tests and compilation passed.' \
+            'Check SMOKE_OUTCOME.txt and smoke.log; a successful catchment/console test is required before deployment.' \
+            > dist/VALIDATION_STATUS.txt
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          files = sorted(p for p in Path('dist').iterdir() if p.is_file())
+          Path('dist/SHA256SUMS.txt').write_text(''.join(
+              f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in files
+          ), encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: swatplus-62-create-perennial-${{ runner.os }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
