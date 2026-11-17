@@ -97,6 +97,25 @@ the smoke step is diagnostic and can fail. Inspect `SMOKE_OUTCOME.txt` and
 `smoke.log` before using an artifact. Full partner-catchment tests and native
 SWATdoctR/SWATrunR integration remain required before common-build deployment.
 
+### GitHub Actions results, 2026-11-17
+
+[Run 44046531380](https://github.com/MR-Eini/swatplus/actions/runs/44046531380)
+tested source commit `5540b843f34e854dab527079765fcbfaa6084df8` with GCC 13.
+
+| Check | Windows | Linux |
+| --- | --- | --- |
+| Focused source regressions | Passed | Passed |
+| Complete model compilation | Passed | Passed |
+| Registered perennial CTest | Passed | Passed |
+| Diagnostic Ames smoke run | Failed: `hyd_read_connect.f90:338`, `ob(0)` bounds | Failed: segmentation fault in `hrudb_init` |
+
+The Linux smoke failure has not been compared against an unmodified Linux
+baseline. The Windows bounds failure was reproduced with an unmodified
+baseline locally under GNU 14.3.0; it also occurs in the patched GCC 13 CI
+build. These results do not establish a successful full-model run or console
+compatibility. Both CI artifacts include the failed smoke logs and candidate
+status; do not interpret the overall workflow success as smoke-test success.
+
 Keep production perennial `days_mat = 0` until a combined executable has
 passed the intended catchment checks. Do not remove an existing fort.6 R
 workaround based solely on these source changes or compiler selection.
