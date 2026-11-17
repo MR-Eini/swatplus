@@ -23,6 +23,7 @@
       use soil_module
       use output_landscape_module
       use hydrograph_module, only : ht1
+      use utils
       
       implicit none 
 
@@ -53,7 +54,7 @@
       soil1(j)%mp(1)%lab = soil1(j)%mp(1)%lab + ht1%solp !HAK/KDW
       
       !! compute soluble P lost in surface runoff
-      xx = soil(j)%phys(1)%bd * soil(j)%phys(1)%d * bsn_prm%phoskd
+      xx = soil(j)%phys(1)%bd * soil(j)%phys(1)%d * hru(j)%nut%phoskd
       surqsolp(j) = soil1(j)%mp(1)%lab  * surfq(j) / (xx + 1.)   !dont merge
       !!units ==> surqsolp = [kg/ha * mm] / [t/m^3 * mm * m^3/t] = kg/ha
       surqsolp(j) = Min(surqsolp(j), soil1(j)%mp(1)%lab)
@@ -65,8 +66,8 @@
       do ly = 1, soil(j)%nly
         vap = 0.
        if (ly /= i_sep(j)) then
-         vap = -soil(j)%ly(ly)%prk / (.01 * soil(j)%phys(ly)%st + .1 * bsn_prm%pperco *  soil(j)%phys(ly)%bd)
-         plch = .001 * soil1(j)%mp(ly)%lab * (1. - Exp(vap))
+         vap = -soil(j)%ly(ly)%prk / (.01 * soil(j)%phys(ly)%st + .1 * hru(j)%nut%pperco *  soil(j)%phys(ly)%bd)
+         plch = .001 * soil1(j)%mp(ly)%lab * (1. - exp_w(vap))
          plch = Min(plch, soil1(j)%mp(ly)%lab)
          soil1(j)%mp(ly)%lab = soil1(j)%mp(ly)%lab - plch
          if (ly == soil(j)%nly) then
@@ -78,8 +79,8 @@
          endif
          !! tile p
          if (ly == hru(j)%lumv%ldrain) then
-           vap = -qtile / (.01 * soil(j)%phys(ly)%st + .1 * bsn_prm%pperco *  soil(j)%phys(ly)%bd)
-           plch = .001 * soil1(j)%mp(ly)%lab * (1. - Exp(vap))
+           vap = -qtile / (.01 * soil(j)%phys(ly)%st + .1 * hru(j)%nut%pperco *  soil(j)%phys(ly)%bd)
+           plch = .001 * soil1(j)%mp(ly)%lab * (1. - exp_w(vap))
            plch = Min(plch, soil1(j)%mp(ly)%lab)
            soil1(j)%mp(ly)%lab = soil1(j)%mp(ly)%lab - plch
            hls_d(j)%tilelabp = plch

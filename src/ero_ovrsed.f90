@@ -11,7 +11,7 @@
 !!    hru_km(:)   |km2           |area of HRU in square kilometers
 !!    rwst(:)%weat%ts(:)  |mm H2O        |precipitation for the time step during the
 !!                               |day in HRU
-!!    eros_spl    |none          |coefficient of splash erosion varing 0.9-3.1
+!!    eros_spl    |none          |coefficient of splash erosion varying 0.9-3.1
 !!    ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
 !!    ~ ~ ~ OUTGOING VARIABLES ~ ~ ~
@@ -164,7 +164,7 @@
 
     !! Overland flow erosion 
     !! cover and management factor used in usle equation (ysed.f)
-      cover = pl_mass(j)%ab_gr_com%m + soil1(j)%rsd(1)%m
+      cover = pl_mass(j)%ab_gr_com%m + pl_mass(j)%rsd_tot%m
       c = Exp((-.2231 - cvm_com(j)) * Exp(-.00115 * cover) + cvm_com(j))
     !! specific weight of water at 5 centigrate =9807N/m3
       bed_shear = 9807 * (hhqday(j,k) / 1000.) * hru(j)%topo%slope ! N/m2

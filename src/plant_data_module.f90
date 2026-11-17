@@ -3,7 +3,30 @@
       implicit none
       
       character(len=40), dimension (:), allocatable :: plts_bsn     !none      |plant names simulated in current run
-     
+      character(len=25), dimension(:), allocatable :: pl_class      !none      |plant class - row crop, tree, grass, etc
+      real :: photo_degrade_factor = .01   ! none  |fraction to reduce surface residue due to photo degradation
+
+      type residue_partition_fracs
+        !! field names are misleading.
+        !! plant_parm_read.f90:60-63 reads plants.plt columns into these slots and the carbon model uses
+        !! %lig_frac as bg_lig_frac and %str_frac as ab_lig_frac. Math is correct, names mislead.
+        !! Renaming touches multiple files; flagged for the model devs to resolve.
+        real :: meta_frac = 0.85      !none       |reads plants.plt avg_lig_frac
+        real :: str_frac = 0.15       !none       |reads plants.plt ab_lig_frac (used as above-ground lignin)
+        real :: lig_frac = 0.12       !none       |reads plants.plt bg_lig_frac (used as below-ground lignin)
+      end type residue_partition_fracs
+      
+      type lignin_derived_partition_fracs
+        real :: meta_frac_abg = 0.85  !none       |fraction of above ground (abg) biomass that is metabolic 
+        real :: str_frac_abg = 0.15   !none       |fraction of above ground (abg) biomass that is structural
+        real :: lig_frac_abg = 0.12   !none       |fraction of above ground (abg) biomass that is lignin    
+        real :: meta_frac_blg = 0.85  !none       |fraction of below ground (blg) biomass that is metabolic
+        real :: str_frac_blg = 0.15   !none       |fraction of below ground (blg) biomass that is structural
+        real :: lig_frac_blg = 0.12   !none       |fraction of below ground (blg) biomass that is lignin    
+      end type lignin_derived_partition_fracs
+      type(lignin_derived_partition_fracs), dimension(:),allocatable, target, save ::  cswat_1_part_fracs
+
+
       type plant_db
         character(len=40) :: plantnm = ""  !none              |crop name
         character(len=18) :: typ = ""    !none              |plant category
@@ -47,7 +70,7 @@
         real :: gsi = 0.002              !m/s               |maximum stomatal conductance
         real :: vpdfr = 4.               !kPa               |vapor pressure deficit at which GMAXFR is valid
         real :: gmaxfr = 0.75            !none              |fraction of max stomatal conductance that is 
-                                         !                    achieved at the vapor pressue deficit defined by VPDFR
+                                         !                    achieved at the vapor pressure deficit defined by VPDFR
         real :: wavp = 8.                !none              |rate of decline in radiation use efficiency
         real :: co2hi = 660.             !uL CO2/L air      |CO2 concentration higher than the ambient corresponding
                                          !                    to the 2nd point on radiation use efficiency curve             
@@ -79,6 +102,7 @@
         real :: rsd_pctcov = 0.          !                  |residue factor for percent cover equation
         real :: rsd_covfac = 0.          !                  |residue factor for surface cover (C factor) equation
         !character(len=45) :: desc = "unknown"
+        type (residue_partition_fracs) :: res_part_fracs
       end type plant_db
       type (plant_db), dimension(:),allocatable, target, save :: pldb
       type (plant_db), pointer :: pl_db
@@ -95,7 +119,7 @@
         real :: pup1 = 0.        !none      |1st shape parameter for plant P uptake equation
         real :: pup2 = 0.        !none      |2nd shape parameter for plant P uptake equation
         real :: gmaxfr = 0.      !none      |fraction of max stomatal conductance that is 
-                                 !            achieved at the vapor pressue deficit defined by VPDFR
+                                 !            achieved at the vapor pressure deficit defined by VPDFR
         real :: vpdfr = 0.       !kPa       |vapor pressure deficit at which GMAXFR is valid
         real :: cvm = 0.         !frac      |fraction of the maximum leaf area index corresponding
                                  !            to the second point of the optimal leaf area dev curve

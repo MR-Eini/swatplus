@@ -41,6 +41,10 @@
       
       implicit none
 
+      
+      
+      
+      external :: theta
       integer :: j = 0          !none          |HRU number
       real:: df = 0.            !none          |oriented and random roughness decay factor - based
                                 !              |on cumulative EI and cumulative precip_eff
@@ -53,7 +57,7 @@
       
       j = ihru
 
-!! Calculate current cummulative erosivity and rainfall
+!! Calculate current cumulative erosivity and rainfall
     ei = usle_ei*18.7633
     if (itill(j) ==1)then
       cumeira(j) = cumeira(j) + ei

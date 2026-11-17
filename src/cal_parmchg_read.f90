@@ -1,7 +1,7 @@
       subroutine cal_parmchg_read
       
 !!    ~ ~ ~ PURPOSE ~ ~ ~
-!!    this function computes new paramter value based on 
+!!    this function computes new parameter value based on 
 !!    user defined change
 
 !!    ~ ~ ~ INCOMING VARIABLES ~ ~ ~
@@ -24,11 +24,14 @@
       use gwflow_module, only : ncell
       
       implicit none
+      
+      external :: define_unit_elements
 
       !integer, dimension (:), allocatable :: elem_cnt1   !           |  
       character (len=80) :: titldum = ""                  !           |title of file
       character (len=80) :: header = ""                   !           |header of file
-      integer :: eof = 0                                  !           |end of file
+      character (len=10) :: range = ""                    !           |real conditional variable range
+      integer :: eof = 0                                  !           |end of file  
       integer :: imax = 0                                 !none       |determine max number for array (imax) and total number in file
       integer :: nspu = 0                                 !           |
       logical :: i_exist                                  !none       |check to determine if file exists
@@ -88,7 +91,14 @@
           if (nconds > 0) then
             allocate (cal_upd(i)%cond(nconds))
             do icond = 1, nconds
-              read (107,*,iostat=eof) cal_upd(i)%cond(icond)
+              read (107,*,iostat=eof) range
+              backspace (107)
+              if (range == "range") then
+                read (107,*,iostat=eof) range, cal_upd(i)%cond(icond)%var,   &
+                    cal_upd(i)%val1, cal_upd(i)%val2
+              else
+                read (107,*,iostat=eof) cal_upd(i)%cond(icond)
+              end if 
             end do
           end if
         
@@ -101,7 +111,7 @@
             case ("rdt")
               cal_upd(i)%num_elem = db_mx%dtbl_res
             case ("plt")
-              cal_upd(i)%num_elem = sp_ob%hru
+              cal_upd(i)%num_elem = db_mx%plantparm
             case ("lyr")
               cal_upd(i)%num_elem = sp_ob%hru
             case ("sol")
@@ -115,7 +125,7 @@
             case ("cha")
               cal_upd(i)%num_elem = sp_ob%chan
             case ("swq")
-              cal_upd(i)%num_elem = sp_ob%chan
+              cal_upd(i)%num_elem = db_mx%ch_nut
             case ("res")
               cal_upd(i)%num_elem = sp_ob%res
             case ("sdc")
@@ -128,12 +138,8 @@
               cal_upd(i)%num_elem = db_mx%pcpfiles
             case ("tmp")
               cal_upd(i)%num_elem = db_mx%tmpfiles
-            case ("gwf") !rtb - all gwflow cells
+            case ("gwf") !gwflow parameters - default to all cells
                cal_upd(i)%num_elem = ncell
-            case ("gwf_riv") !rtb - all channels
-               cal_upd(i)%num_elem = sp_ob%chandeg
-            case ("gwf_sgl") !rtb - single value
-               cal_upd(i)%num_elem = 1
             end select
             
             allocate (cal_upd(i)%num(cal_upd(i)%num_elem), source = 0)

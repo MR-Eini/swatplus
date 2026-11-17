@@ -1,10 +1,15 @@
 [![Release](https://img.shields.io/github/release/swat-model/swatplus.svg?style=flat-square)](https://github.com/swat-model/swatplus/releases)
+
 # SWAT+
-Source: https://github.com/swat-model/swatplus/tree/main
+
+The `main` branch maintains the official **62.0.0** source plus
+two documented CREATE perennial-plant fixes. It is not the upstream latest
+version. See [PATCHES.md](PATCHES.md) for behavior and validation limits and
+[BUILD.md](BUILD.md) for reproducible builds and deployment checks.
 
 The **Soil and Water Assessment Tool Plus** [SWAT+](https://swatplus.gitbook.io/docs) is an open source model jointly developed by the USDA Agricultural Research Service ([USDA-ARS](http://ars.usda.gov)) and Texas A&M AgriLife Research, part of The Texas A&M University System. Model contributions have been made by Colorado State University and others. SWAT+ is a small watershed to river basin-scale model to simulate the quality and quantity of surface and ground water and predict the environmental impact of land use, land management practices, and climate change. SWAT is widely used in assessing soil erosion prevention and control, non-point source pollution control and regional management in watersheds.
 
-This repository contains the latest SWAT+ source code and some test data to create and test the executable for various compiler and platforms. 
+This repository contains the patched SWAT+ rev 62 source and reference data to build and test the executable on supported platforms.
 
 ## Repository
 
@@ -74,7 +79,9 @@ __The following sections are emphasizing various development aspects.__
 
 - [Tagging and Versioning](doc/Tagging.md)
 
-- [Developing in Visual Studio](doc/VS.md)
+- [Developing in Visual Studio](doc/VS-Win.md)
+
+- [Developing with Codespaces Visual Studio Code](doc/VSCode_Codespace.md)
 
 - [FORTRAN Coding Conventions (alpha)](doc/coding_conventions.md)
 

@@ -27,6 +27,10 @@
 
       implicit none
       
+
+      
+
+      external :: atri, aunif, ee
       real :: vv = 0.             !none          |variable to hold intermediate calculation 
       real :: rhm = 0.            !none          |mean monthly relative humidity adjusted for
                                   !              |wet or dry condiditions
@@ -42,7 +46,7 @@
       integer :: iwgn             !              |
       
 
-      !! Climate Paramenters required for Penman-Monteith
+      !! Climate Parameters required for Penman-Monteith
       
       !! convert dewpoint to relative humidity (idewpt == 0)
       if (wgn_pms(iwgn)%idewpt == 0) then

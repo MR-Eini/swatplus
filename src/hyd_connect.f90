@@ -12,9 +12,11 @@
       use constituent_mass_module
       use ru_module
       use basin_module
-      use gwflow_module, only: nat_model
       
       implicit none
+      
+      external :: aqu2d_read, dr_db_read, gwflow_chan_read, gwflow_read, hyd_read_connect, overbank_read, &
+                  recall_read, recall_read_cs, recall_read_salt, ru_read, ru_read_elements
 
       integer :: eof = 0              !           |end of file
       integer :: imax = 0             !none       |determine max number for array (imax) and total number in file
@@ -75,7 +77,6 @@
       if (sp_ob%gwflow > 0) then     ! 4==gwflow
         sp_ob1%gwflow = nspu
         nspu = sp_ob%gwflow + nspu
-        inquire(file='gwflow.huc12cell',exist=i_exist)
       end if
       if (sp_ob%aqu > 0) then         ! 5==aquifer
         sp_ob1%aqu = nspu
@@ -158,10 +159,7 @@
                 
       !read connect file for recalls
       if (sp_ob%recall > 0) then
-        call hyd_read_connect(in_con%rec_con, "recall  ", sp_ob1%recall, sp_ob%recall, hd_tot%recall, 1) 
-        call recall_read
-        call recall_read_salt !rtb salt
-        call recall_read_cs !rtb cs
+        call hyd_read_connect(in_con%rec_con, "recall  ", sp_ob1%recall, sp_ob%recall, hd_tot%recall, 1)
       end if
                 
       !read connect file for export coefficients
@@ -214,7 +212,7 @@
           end do
         end do
       
-      !! determine number of recieving units and set object numbers for outflow hyds
+      !! determine number of receiving units and set object numbers for outflow hyds
         do i = 1, sp_ob%objs
           do ii = 1, ob(i)%src_tot
             iob_out = ob(i)%obtyp_out(ii)          !object type out
@@ -364,7 +362,7 @@
             do ich = 1, sp_ob%chan
               kk = sp_ob1%chan + ich - 1
               rcv_sum(kk) = rcv_sum(kk) + 1                   ! setting sequential inflow number
-              jj = rcv_sum(kk)                                ! jj=seqential receiving number
+              jj = rcv_sum(kk)                                ! jj=sequential receiving number
               ob(kk)%obj_in(jj) = i                           ! source object number (for receiving unit)
               ob(kk)%obtyp_in(jj) = ob(i)%typ
               ob(kk)%htyp_in(jj) = ob(i)%htyp_out(ii)
@@ -374,7 +372,7 @@
           else
             kk = ob(i)%obj_out(ii)                          ! kk=object number of outflow object
             rcv_sum(kk) = rcv_sum(kk) + 1                   ! setting sequential receiving hyd number
-            jj = rcv_sum(kk)                                ! jj=seqential receiving number
+            jj = rcv_sum(kk)                                ! jj=sequential receiving number
             ob(kk)%obj_in(jj) = i                           ! source object number (for receiving unit)
             ob(kk)%obtyp_in(jj) = ob(i)%typ
             ob(kk)%obtypno_in(jj) = ob(i)%num
@@ -388,6 +386,8 @@
               do ielem = 1, ru_def(iru)%num_tot
                 ielem_db = ru_def(iru)%num(ielem)
                 kk = ru_elem(ielem_db)%obj
+                rcv_sum(kk) = rcv_sum(kk) + 1               ! setting sequential receiving hyd number
+                jj = rcv_sum(kk)  
                 ob(kk)%obj_in(jj) = i                       ! source object number (for receiving unit)
                 ob(kk)%obtyp_in(jj) = ob(i)%typ
                 ob(kk)%obtypno_in(jj) = ob(i)%props
@@ -413,7 +413,7 @@
     do while (idone == 0)
         do i = 1, sp_ob%objs
         
-        if (iord > 1000) then        
+        if (iord > 5000) then        
           open (9002,file="looping.con",recl = 8000)
           write (9002, *) "LOOPING.CON CHECKING INFINITE LOOPS"
           do iob = 1, sp_ob%objs
@@ -484,7 +484,7 @@
                 !! modflow - for all inflow objects
                 if (ob(i)%typ == "modflow") then
                   iobtyp = ob(i)%obtyp_out(ii)
-                  !! add recieving for all channels from modflow
+                  !! add receiving for all channels from modflow
                   if (iobtyp == "cha") then
                     ob1 = sp_ob1%chan
                     ob2 = sp_ob1%chan + sp_ob%chan - 1

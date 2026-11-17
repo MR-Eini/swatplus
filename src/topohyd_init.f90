@@ -8,6 +8,8 @@
       use plant_module
       
       implicit none
+      
+      external :: ascrv
 
       integer :: isno = 0             !none       |counter
       integer :: ifield_db = 0        !           |
@@ -43,7 +45,7 @@
         hru(ihru)%hyd%cn3_swf = hyd_db(ihyd_db)%cn3_swf
         hru(ihru)%hyd%perco = hyd_db(ihyd_db)%perco
         
-        !! set hru snow paramters
+        !! set hru snow parameters
         isno_db = hru(ihru)%dbs%snow
         hru(ihru)%sno = snodb(isno_db)
         !! shape parameters to describes area of snow cover as a function of amount of snow

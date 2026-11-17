@@ -66,7 +66,6 @@
       real :: water_volume = 0.
       real :: salt_mass_kg = 0.
       real :: ro_mass = 0.
-      real :: wet_ro_mass = 0.
       real :: sro = 0.
       real :: vv = 0.
       real :: ww = 0.
@@ -123,7 +122,7 @@
           cosalt = Max(vsalt / vv, 0.)
 
           !! calculate salt ion mass in surface runoff
-          cosurfsalt = bsn_prm%nperco * cosalt
+          cosurfsalt = hru(j)%nut%nperco * cosalt
           if (jj == 1) then
             ro_mass = surfq(j) * cosurfsalt
             ro_mass = Min(ro_mass, cs_soil(j)%ly(jj)%salt(isalt))
@@ -190,4 +189,4 @@
       enddo
 
       return
-      end
+      end subroutine salt_lch

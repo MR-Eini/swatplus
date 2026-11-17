@@ -54,9 +54,9 @@
     real :: sed_remove2 = 0.  !%               |sediment removal for for vfs section 2
     real :: sed_remove = 0.   !%               |Average sediment removal for for entire vfs 
     real :: remove1 = 0.      !%               |Generic removal for for vfs section 1 
-                              !                |(recycled for constituants)
+                              !                |(recycled for constituents)
     real :: remove2 = 0.      !%               |Generic removal for for vfs section 2 
-                              !                |(recycled for constituants)
+                              !                |(recycled for constituents)
     real :: sedtrap = 0.      !                | 
     real :: xrem = 0.         !                ! 
     real :: vfs_ratio1 = 0.   !                !
@@ -123,7 +123,7 @@
       if (sed_remove1 > 100.) sed_remove1 = 100.
       if (sed_remove1 < 0.) sed_remove1 = 0.
 
-      sed_remove2 = 79.0 - 1.04 * vfs_sed2 + 0.213 * surq_remove1 
+      sed_remove2 = 79.0 - 1.04 * vfs_sed2 + 0.213 * surq_remove2 
       if (sed_remove2 > 100.) sed_remove2 = 100.
       if (sed_remove2 < 0.) sed_remove2 = 0.
 

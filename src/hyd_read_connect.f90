@@ -11,9 +11,11 @@
       use time_module
       use climate_module
       use maximum_data_module
-      use gwflow_module, only: nat_model
-      
+      use basin_module, only : bsn_cc
+
       implicit none
+      
+      external :: search
       
       integer, intent(in) :: nhyds    !           |
       integer, intent(in) :: ndsave   !           |
@@ -100,7 +102,7 @@
                 end if
                 npaths = cs_db%num_paths
                 if (npaths > 0) then
-          allocate (obcs(i)%hin(1)%path(npaths), source = 0.)
+                  allocate (obcs(i)%hin(1)%path(npaths), source = 0.)
                   allocate (obcs(i)%hin_sur(1)%path(npaths), source = 0.)
                   allocate (obcs(i)%hin_lat(1)%path(npaths), source = 0.)
                   allocate (obcs(i)%hin_til(1)%path(npaths), source = 0.)
@@ -218,7 +220,7 @@
               read (107,*,iostat=eof) ob(i)%num, ob(i)%name, ob(i)%gis_id, ob(i)%area_ha, ob(i)%lat, ob(i)%long, &
                 ob(i)%elev, ob(i)%props, ob(i)%wst_c, ob(i)%constit, ob(i)%props2, ob(i)%ruleset, ob(i)%src_tot
               
-              !! intialize area to calcluate drainage areas in hyd_connect
+              !! initialize area to calculate drainage areas in hyd_connect
               if (ob(i)%typ == "hru" .or. ob(i)%typ == "ru" .or. ob(i)%typ == "recall") then
                 ob(i)%area_ha_calc = ob(i)%area_ha
               else
@@ -307,10 +309,10 @@
                       endif
                     enddo
                   endif
-                  if(aqu_found.eq.1 .and. nat_model == 1) then
+                  if(aqu_found.eq.1 .and. bsn_cc%gwflow == 1) then
                     ob(i)%src_tot = ob(i)%src_tot - 1
                   endif
-                  
+
                   if (eof < 0) exit
               else
                 !! set outflow object type to 0 - needed in final hyd_read_connect loop 

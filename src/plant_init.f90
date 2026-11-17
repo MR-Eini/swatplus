@@ -1,6 +1,6 @@
       subroutine plant_init (init, iihru)
 
-      use hru_module, only : cvm_com, hru, ipl, rsdco_plcom
+      use hru_module, only : cvm_com, hru, ipl
       use soil_module
       use plant_module
       use hydrograph_module
@@ -16,6 +16,8 @@
       use organic_mineral_mass_module
       
       implicit none
+      
+      external :: pl_partition, pl_root_gro, pl_seed_gro, pl_rootfr, xmon, jdt
       
       integer, intent (in) :: init   !           |
       integer, intent (in) :: iihru  !none       |hru number to send to plant_init
@@ -33,7 +35,8 @@
       integer :: isched = 0          !           |
       integer :: iop = 0             !none       |management operation counter 
       integer :: irot = 0            !none       |rotation year counter 
-      integer :: igrow = 0           !none       |julian day growth begins
+      integer :: igrow               !none       |julian day growth begins; assigned for each plant
+      logical :: grow_start_found    !           |a growth start was found for this plant
       integer :: iday_sum = 0        !none       |day for southern hemisphere (182-181)
       integer :: iday_sh = 0         !none       |julian day growth begins in souther hemisphere
       integer :: jday_prev = 0       !none       |julian day of previous operation
@@ -55,6 +58,7 @@
       real :: matur_frac = 0.        !frac       |fraction to maturity - use hu for annuals and years to maturity for perennials
       real :: f = 0.                 !none       |fraction of plant's maximum lai corresponding to a given fraction of phu
       real :: dd = 0.             !none          |relative distance of the earth from the sun
+
       
       j = iihru
 
@@ -77,6 +81,8 @@
             deallocate (pl_mass(j)%yield_yr)
             deallocate (pcom(j)%plstr) 
             deallocate (pcom(j)%plcur)
+            deallocate (pl_mass(j)%rsd)
+            deallocate (soil1(j)%pl)
           end if
         
         pcom(j)%npl = pcomdb(icom)%plants_com
@@ -94,24 +100,31 @@
         allocate (pl_mass(j)%yield_yr(ipl))
         allocate (pcom(j)%plstr(ipl))
         allocate (pcom(j)%plcur(ipl))
-        !! allocate water uptake by layer
+        allocate (pl_mass(j)%rsd(ipl))
+        allocate (soil1(j)%pl(ipl))
+        !! allocate water uptake and root fraction by layer
         do ipl = 1, pcom(j)%npl
           allocate (pcom(j)%plcur(ipl)%uptake(soil(j)%nly), source = 0.)
           pcom(j)%plcur(ipl)%uptake = 0.
+          allocate (pcom(j)%plg(ipl)%rtfr(soil(j)%nly), source = 0.)
         end do
-
+        !! allocate residue for each plant by soil layer
+        do ipl = 1, pcom(j)%npl
+          allocate (soil1(j)%pl(ipl)%rsd(soil(j)%nly))
+        end do
+        
         pcom(j)%rsd_covfac = 0.
         cvm_com(j) = 0.
-        rsdco_plcom(j) = 0.
         pcom(j)%pcomdb = icom
         pcom(j)%rot_yr = 1
         pcom(j)%laimx_sum = 0.
         
-        ! !zero residue litter pools
-        soil1(j)%rsd(1) = plt_mass_z
-        soil1(j)%meta(1) = plt_mass_z
-        soil1(j)%str(1) = plt_mass_z
-        soil1(j)%lig(1) = plt_mass_z
+        !!zero surface residue litter pool for each plant and total
+        pl_mass(j)%rsd(:) = plt_mass_z
+        pl_mass(j)%rsd_tot = plt_mass_z
+        !soil1(j)%meta(1) = plt_mass_z
+        !soil1(j)%str(1) = plt_mass_z
+        !soil1(j)%lig(1) = plt_mass_z
                          
         do ipl = 1, pcom(j)%npl
           pcom(j)%pl(ipl) = pcomdb(icom)%pl(ipl)%cpnm
@@ -119,44 +132,25 @@
           pcom(j)%plcur(ipl)%idorm = "y"
           idp = pcomdb(icom)%pl(ipl)%db_num
           
-          !! initialize static and century fresh organic carbon pools
-          if (bsn_cc%cswat == 0) then
-            soil1(j)%rsd(1)%m = soil1(j)%rsd(1)%m + pcomdb(icom)%pl(ipl)%rsdin
-            soil1(j)%rsd(1)%c = soil1(j)%rsd(1)%c + 0.42 * pcomdb(icom)%pl(ipl)%rsdin
-            soil1(j)%rsd(1)%n = soil1(j)%rsd(1)%n + 0.42 * pcomdb(icom)%pl(ipl)%rsdin / 10.
-            soil1(j)%rsd(1)%p = soil1(j)%rsd(1)%p + 0.42 * pcomdb(icom)%pl(ipl)%rsdin / 100.
-          end if
-          
-          if (bsn_cc%cswat == 2) then
-            !! metabolic residue
-            rsd_meta%m = 0.85 * pcomdb(icom)%pl(ipl)%rsdin
-            rsd_meta%c = 0.357 * pcomdb(icom)%pl(ipl)%rsdin !0.357=0.42*0.85
-            rsd_meta%n = rsd_meta%c / 10.           !assume 10:1 C:N ratio (EPIC)
-            rsd_meta%p = rsd_meta%c / 100.   
-            soil1(j)%meta(1) = soil1(j)%meta(1) + rsd_meta
-            
-            !! structural residue
-            rsd_str%m = 0.15 * pcomdb(icom)%pl(ipl)%rsdin
-            rsd_str%c = 0.063 * pcomdb(icom)%pl(ipl)%rsdin   !0.063=0.42*0.15
-            rsd_str%n = rsd_str%c / 150.             !assume 150:1 C:N ratio (EPIC)
-            rsd_str%p = rsd_str%c / 1500.   
-            soil1(j)%str(1) = soil1(j)%str(1) + rsd_str
-          
-            !! lignin residue
-            soil1(j)%lig(1)%m = soil1(j)%lig(1)%m + 0.8 * rsd_str%m
-            soil1(j)%lig(1)%c = soil1(j)%lig(1)%c + 0.8 * rsd_str%c              !assume 80% Stuctural C is lig
-            soil1(j)%lig(1)%n = soil1(j)%lig(1)%n + 0.2 * rsd_str%n
-            soil1(j)%lig(1)%p = soil1(j)%lig(1)%p + 0.02 * rsd_str%p
-            
-            !! total residue pools
-            soil1(j)%rsd(1) = soil1(j)%rsd(1) + rsd_meta + rsd_str
-          end if
+          !! initialize surface residue litter pools - same for static and century pools
+          pl_mass(j)%rsd(ipl)%m = pl_mass(j)%rsd(ipl)%m + pcomdb(icom)%pl(ipl)%rsdin
+          pl_mass(j)%rsd(ipl)%c = pl_mass(j)%rsd(ipl)%c + 0.42 * pcomdb(icom)%pl(ipl)%rsdin
+          pl_mass(j)%rsd(ipl)%n = pl_mass(j)%rsd(ipl)%n + 0.42 * pcomdb(icom)%pl(ipl)%rsdin / 10.
+          pl_mass(j)%rsd(ipl)%p = pl_mass(j)%rsd(ipl)%p + 0.42 * pcomdb(icom)%pl(ipl)%rsdin / 100.
+          pl_mass(j)%rsd_tot = pl_mass(j)%rsd_tot + pl_mass(j)%rsd(ipl)
           
           ! set heat units to maturity
           ! first compute base0 units for entire year
           iob = hru(j)%obj_no
           iwst = ob(iob)%wst
           iwgn = wst(iwst)%wco%wgn
+          ! Declaration initialization implies SAVE: choose a fresh, valid day for every plant.
+          ! These defaults also cover an unsuccessful planting/dormancy search.
+          if (wgn(iwgn)%lat > 0.) then
+            igrow = 1
+          else
+            igrow = 181
+          end if
           phu0 = 0.
           do iday = 1, 365
             call xmon (iday, mo, day_mo)
@@ -183,6 +177,7 @@
             pcom(j)%plcur(ipl)%phumat = -pcom(j)%plcur(ipl)%phumat
           else
             ! if positive assume days to maturity
+            grow_start_found = .false.
             ! calculate planting day for summer annuals
             if (pldb(idp)%typ == "warm_annual" .or. pldb(idp)%typ == "warm_annual_tuber" .or.   &
                 pldb(idp)%typ == "cold_annual" .or. pldb(idp)%typ == "cold_annual_tuber") then
@@ -213,18 +208,15 @@
                   else
                     igrow = iday_sh
                   end if
+                  grow_start_found = .true.
                   exit   ! exit on plant day at 0.15 base 0 heat units
                 end if
               end do
             end if
           
-            ! switched from starting hu at dormancy (daylength) to 0.15 hu (above) like summer annuals
-            if (pldb(idp)%typ == "null" .or. pldb(idp)%typ == "null1") then
-              if (wgn(iwgn)%lat > 0.) then
-                igrow = 1
-              else
-                igrow = 181
-              end if
+            ! Perennials start accumulating heat units at the end of daylength dormancy.
+            if (pldb(idp)%typ == "null" .or. pldb(idp)%typ == "null1" .or. &
+                pldb(idp)%typ == "perennial") then
               do iday = igrow, igrow + 180
                 call xmon (iday, mo, day_mo)
                 tave = (wgn(iwgn)%tmpmx(mo) + wgn(iwgn)%tmpmn(mo)) / 2.
@@ -244,26 +236,26 @@
                     h = 3.1416         !! latitude exceeds +/- 66.5 deg in summer
                   endif 
                   daylength = 7.6394 * h
-                  if (daylength - wgn_pms(iwgn)%daylth >= wgn_pms(iwgn)%daylmn) exit
+                  if (daylength - wgn_pms(iwgn)%daylth >= wgn_pms(iwgn)%daylmn) then
+                    igrow = iday
+                    grow_start_found = .true.
+                    exit
+                  end if
                 !end if
               end do
-              igrow = iday
+            end if
+
+            if (.not. grow_start_found) then
+              write (*,'(a,i0,a,i0,a,i0)') "plant_init: no growth start found for HRU ", j, &
+                  ", plant ", idp, "; using fallback day ", igrow
             end if
             
             ! calculate heat units from plant day (iday) to maturity (add days to maturity)
             phutot = 0.
             do iday = igrow, igrow + pldb(idp)%days_mat
-              if (wgn(iwgn)%lat > 0.) then
-                call xmon (iday, mo, day_mo)
-              else
-                ! find Southern Hemisphere day
-                if (iday > 365) then
-                  iday_sh = iday - 365
-                else
-                  iday_sh = iday
-                end if
-                call xmon (iday_sh, mo, day_mo)
-              end if
+              ! Match xmon's active calendar, in either hemisphere and over any year boundary.
+              iday_sh = modulo (iday - 1, ndays(13)) + 1
+              call xmon (iday_sh, mo, day_mo)
               tave = (wgn(iwgn)%tmpmx(mo) + wgn(iwgn)%tmpmn(mo)) / 2.
               phuday = tave - pldb(idp)%t_base
               if (phuday > 0.) then
@@ -329,10 +321,9 @@
             
           cvm_com(j) = plcp(idp)%cvm + cvm_com(j)
           pcom(j)%rsd_covfac = pcom(j)%rsd_covfac + pldb(idp)%rsd_covfac
-          rsdco_plcom(j) = rsdco_plcom(j) + pldb(idp)%rsdco_pl
           pcom(j)%plcur(ipl)%idplt = pcomdb(icom)%pl(ipl)%db_num
           
-          !! set intial n and p contents in total plant
+          !! set initial n and p contents in total plant
           pcom(j)%plm(ipl)%n_fr = (pldb(idp)%pltnfr1- pldb(idp)%pltnfr3) *              &
              (1.- matur_frac /(matur_frac + Exp(plcp(idp)%nup1 - plcp(idp)%nup2 *       &
              matur_frac))) + pldb(idp)%pltnfr3
@@ -356,6 +347,8 @@
             call pl_root_gro(j)
             call pl_seed_gro(j)
             call pl_partition(j, 1)
+            call pl_root_gro(j)
+            call pl_rootfr(j)
           end if
 
         end do   ! ipl loop

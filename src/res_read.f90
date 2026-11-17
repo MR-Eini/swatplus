@@ -15,6 +15,10 @@
       
       implicit none
 
+      
+      
+      
+      external :: hyddep_output
       integer :: i = 0
       
       character (len=80) :: titldum = ""!           |title of file
@@ -71,7 +75,7 @@
          if (eof < 0) exit
        end do
        
-       do ires = 1, db_mx%res_dat
+       do ires = 1, sp_ob%res
         !! initialize organics and minerals in water
         do isp_ini = 1, db_mx%res_init
           if (res_dat_c(ires)%init == res_init_dat_c(isp_ini)%init) then
@@ -138,6 +142,8 @@
              !! d50 - micro meters
              res_prm(ires)%sed_stlr_co = exp(-0.184 * res_prm(ires)%sed%d50)
              res_dat(ires)%sed = ised
+             res_prm(ires)%soln_stl_fr = 0.2
+             res_prm(ires)%solp_stl_fr = 0.2
              exit
            end if
          end do      

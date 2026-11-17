@@ -10,6 +10,8 @@
       use basin_module
       
       implicit none      
+      
+      external :: rcurv_interp_dep, sd_rating_curve, qman
 
       real :: kh = 0.
       integer :: idb = 0                !             |
@@ -77,7 +79,7 @@
         if (sd_ch(i)%chs < 1.e-9) sd_ch(i)%chs = .000001
         sd_ch(i)%chl = sd_chd(idb)%chl
         sd_ch(i)%chn = sd_chd(idb)%chn
-        if (sd_ch(i)%chn < .05) sd_ch(i)%chn = .05   !***jga
+        if (sd_ch(i)%chn < .05) sd_ch(i)%chn = .05
         sd_ch(i)%chk = sd_chd(idb)%chk      
         sd_ch(i)%bank_exp = sd_chd(idb)%bank_exp
         sd_ch(i)%cov = sd_chd(idb)%cov
@@ -182,7 +184,7 @@
       end if
       sd_ch(i)%msk%nsteps = time%step * sd_ch(i)%msk%substeps
               
-        !! intial inflow-outflow
+        !! initial inflow-outflow
         if (sd_ch(i)%msk%nsteps > 0) then
           sd_ch(i)%in1_vol = rcurv%flo_rate / (86400. / sd_ch(i)%msk%nsteps)
           sd_ch(i)%out1_vol = rcurv%flo_rate / (86400. / sd_ch(i)%msk%nsteps)
@@ -213,7 +215,7 @@
           iom_ini = sd_init(ich_ini)%org_min
           tot_stor(ich) = om_init_water(iom_ini)
                     
-          !! intialize rating curves - inflow and outflow at current time step
+          !! initialize rating curves - inflow and outflow at current time step
           flow_dep = om_init_water(iom_ini)%flo * sd_ch(ich)%chd
           icha = ich
           call rcurv_interp_dep (icha, flow_dep)

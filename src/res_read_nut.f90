@@ -7,7 +7,7 @@
 !!    ~ ~ ~ PURPOSE ~ ~ ~
 !!    this subroutine reads data from the lake water quality input file (.lwq).
 !!    This file contains data related to initial pesticide and nutrient levels
-!!    in the lake/reservoir and transformation processes occuring within the 
+!!    in the lake/reservoir and transformation processes occurring within the 
 !!    lake/reservoir. Data in the lake water quality input file is assumed to
 !!    apply to all reservoirs in the watershed.    
 
@@ -66,6 +66,8 @@
         res_nut(ires)%psetlr2 = res_nut(ires)%psetlr2 / 365.
         res_nut(ires)%nsetlr1 = res_nut(ires)%nsetlr1 / 365.
         res_nut(ires)%nsetlr2 = res_nut(ires)%nsetlr2 / 365.
+        res_nut(ires)%nsolr = res_nut(ires)%nsolr / 365.
+        res_nut(ires)%psolr = res_nut(ires)%psolr / 365.
       end do
 
       return

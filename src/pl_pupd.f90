@@ -8,7 +8,7 @@
 !!    ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 !!    bio_p1(:)   |none           |1st shape parameter for plant P uptake
 !!                                |equation
-!!    bio_p2(:)   |none           |2st shape parameter for plant P uptake
+!!    bio_p2(:)   |none           |2nd shape parameter for plant P uptake
 !!                                |equation
 !!    ihru        |none           |HRU number
 !!                                |fraction of P in crop biomass at maturity
@@ -58,12 +58,6 @@
         (1. - matur_frac / (matur_frac + Exp(plcp(idp)%pup1 - plcp(idp)%pup2 *      &
         matur_frac))) + pldb(idp)%pltpfr3
 
-      up2(ipl) = pcom(j)%plm(ipl)%p_fr * pl_mass(j)%tot(ipl)%m
-      if (up2(ipl) < pl_mass(j)%tot(ipl)%p) up2(ipl) = pl_mass(j)%tot(ipl)%p
-      uapd(ipl) = up2(ipl) - pl_mass(j)%tot(ipl)%p
-      uapd(ipl) = 1.5 * uapd(ipl)                     !! luxury p uptake
-      
-      !***jga
       up2(ipl) = pcom(j)%plm(ipl)%p_fr * pl_mass(j)%ab_gr(ipl)%m
       if (up2(ipl) < pl_mass(j)%ab_gr(ipl)%p) up2(ipl) = pl_mass(j)%ab_gr(ipl)%p
       uapd(ipl) = up2(ipl) - pl_mass(j)%ab_gr(ipl)%p

@@ -77,9 +77,9 @@
 
       ! constituent mass - soil, plant, aquifer, and channels
       type constituent_mass
-        real, dimension (:), allocatable :: pest        !kg/ha          |pesticide in soil layer
-        real, dimension (:), allocatable :: path        !pathogen hydrographs
-        real, dimension (:), allocatable :: hmet        !heavy metal hydrographs 
+        real, dimension (:), allocatable :: pest        !pesticide (kg/ha)
+        real, dimension (:), allocatable :: path        !pathogen (cfu)
+        real, dimension (:), allocatable :: hmet        !heavy metal (kg/ha) 
         real, dimension (:), allocatable :: salt        !salt ion mass (kg/ha)
         real, dimension (:), allocatable :: salt_min    !salt mineral hydrographs
         real, dimension (:), allocatable :: saltc       !salt ion concentrations (mg/L)
@@ -117,16 +117,31 @@
       type (constituent_mass), dimension (:), allocatable :: ch_water_init
       type (constituent_mass), dimension (:), allocatable :: ch_benthic_init
       
-      ! constituent mass - reservoirs
-      type constituent_mass_res
-        real, dimension (:), allocatable :: pest
-        real, dimension (:), allocatable :: path
-        real, dimension (:), allocatable :: hmet
-        real, dimension (:), allocatable :: salt        !salt ion mass (kg)
-        real, dimension (:), allocatable :: saltc       !salt ion concentrations (g/m3)
-        real, dimension (:), allocatable :: cs          !constituent mass (kg)
-        real, dimension (:), allocatable :: csc         !constituent concentration (g/m3)
-      end type constituent_mass_res
+      ! water treatment plant storage
+      type (constituent_mass), dimension (:), allocatable :: wtp_cs_stor
+      ! water treatment plant treated concentrations
+      type (constituent_mass), dimension (:), allocatable :: wtp_cs_treat
+      
+      ! water use storage
+      type (constituent_mass), dimension (:), allocatable :: wuse_cs_stor
+      ! water use effluent concentrations
+      type (constituent_mass), dimension (:), allocatable :: wuse_cs_efflu
+      
+      ! outside source constituents
+      type (constituent_mass), dimension (:), allocatable :: osrc_cs
+      
+      ! canal storage
+      type (constituent_mass), dimension (:), allocatable :: canal_cs_stor
+      
+      ! water tower storage
+      type (constituent_mass), dimension (:), allocatable :: wtow_cs_stor
+      
+      !! water withdrawn from an individual source
+      type (constituent_mass) :: wdraw_cs
+      !! total water withdrawn from all sources
+      type (constituent_mass) :: wdraw_cs_tot
+      !! constituent outflow from an water allocation object - wtp or use
+      type (constituent_mass) :: outflo_cs
       
       ! storing salt and constituent mass in reservoirs
       type (constituent_mass), dimension (:), allocatable :: res_water
@@ -241,7 +256,7 @@
       end type recall_pesticide_inputs
       type (recall_pesticide_inputs), dimension(:),allocatable:: rec_pest
       
-      ! intial constituent soil-plant concentrations for hrus
+      ! initial constituent soil-plant concentrations for hrus
       type cs_soil_init_concentrations
         character (len=16) :: name = ""             !! name of the constituent - points to constituent database
         real, dimension (:), allocatable :: soil    !! ppm                  |amount of constituent in soil at start of simulation
@@ -254,7 +269,7 @@
       type (cs_soil_init_concentrations), dimension(:), allocatable:: salt_soil_ini
       type (cs_soil_init_concentrations), dimension(:), allocatable:: cs_soil_ini !rtb cs
       
-      ! intial salt ion groundwater concentrations and mineral fractions for aquifers
+      ! initial salt ion groundwater concentrations and mineral fractions for aquifers
       type salt_aqu_init_concentrations
         character (len=16) :: name = ""             !! name of the constituent - points to constituent database
         real, dimension (:), allocatable :: conc    !! g/m3                 |salt ion concentration at start of simulation
@@ -262,7 +277,7 @@
       end type salt_aqu_init_concentrations
       type (salt_aqu_init_concentrations), dimension(:), allocatable:: salt_aqu_ini
       
-      ! intial constituent groundwater concentrations for aquifers
+      ! initial constituent groundwater concentrations for aquifers
       type cs_aqu_init_concentrations
         character (len=16) :: name = ""             !! name of the constituent - points to constituent database
         real, dimension (:), allocatable :: aqu     !! ppm                  |concentration, sorbed mass at start of simulation
@@ -283,7 +298,7 @@
       end type cs_cha_init_concentrations
       type (cs_cha_init_concentrations), dimension(:), allocatable:: cs_cha_ini
       
-      ! intial constituent water-benthic concentrations for reservoirs and channels
+      ! initial constituent water-benthic concentrations for reservoirs and channels
       type cs_water_init_concentrations
         character (len=16) :: name = ""               !! name of the constituent - points to constituent database
         real, dimension (:), allocatable :: water     !! ppm,fracitons        |amount of constituents (dissolved, salt minerals) in aquifer at start of simulation
@@ -651,5 +666,40 @@
         end do
         return
       end function hydcsout_mult_const
+      
+      subroutine hydcsout_conc_mass (vol_m3, hydcs1, hydcs2)
+        real, intent (in) :: vol_m3
+        type (constituent_mass), intent (in) :: hydcs1
+        type (constituent_mass), intent (out) :: hydcs2
+        integer :: ipest = 0
+        integer :: ipath = 0
+        integer :: ihmet = 0
+        integer :: isalt = 0
+        integer :: ics = 0
+        allocate (hydcs2%pest(cs_db%num_pests), source = 0.)
+        allocate (hydcs2%path(cs_db%num_paths), source = 0.)
+        allocate (hydcs2%hmet(cs_db%num_metals), source = 0.)
+        allocate (hydcs2%salt(cs_db%num_salts), source = 0.)
+
+        allocate (hydcs2%cs(cs_db%num_cs), source = 0.) !rtb cs
+
+        !! kg = ppm * m3 / 1000.
+        do ipest = 1, cs_db%num_pests
+          hydcs2%pest(ipest) =  vol_m3 * hydcs1%pest(ipest) / 1000.
+        end do
+        do ipath = 1, cs_db%num_paths
+          hydcs2%path(ipath) =  vol_m3 * hydcs1%path(ipath) / 1000.
+        end do
+        do ihmet = 1, cs_db%num_metals
+          hydcs2%hmet(ihmet) =  vol_m3 * hydcs1%hmet(ihmet) / 1000.
+        end do
+        do isalt = 1, cs_db%num_salts
+          hydcs2%salt(isalt) =  vol_m3 * hydcs1%salt(isalt) / 1000.
+        end do
+        do ics = 1, cs_db%num_cs !rtb cs
+          hydcs2%cs(ics) =  vol_m3 * hydcs1%cs(ics) / 1000.
+        end do
+        return
+      end subroutine hydcsout_conc_mass
       
       end module constituent_mass_module

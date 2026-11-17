@@ -29,6 +29,8 @@
       use output_landscape_module
       
       implicit none
+      
+      external :: ero_cfactor, ero_eiusle, ero_ovrsed, ero_pkq, ero_ysed, sq_dailycn, sq_volq, sq_crackflow
 
       integer :: j = 0            !none          |HRU number 
       real :: ulu = 0.            !              |
@@ -72,8 +74,10 @@
         call ero_ovrsed
       end if
 
-      call ero_cfactor
-      if (surfq(j) > 1.e-6 .and. qp_cms > 1.e-6) call ero_ysed
+      if (surfq(j) > 1.e-6 .and. qp_cms > 1.e-6) then
+        call ero_cfactor
+        call ero_ysed
+      end if
 
       if (qday < 0.) qday = 0.
 

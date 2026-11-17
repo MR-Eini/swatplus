@@ -38,7 +38,7 @@
         integer :: fireop_db = 0      !! none     |fire data
         integer :: grassop_db = 0     !! none     |grassed waterways data
         integer :: plparmop_db = 0    !! none     |plant parms update data
-        integer :: rsdmgtop_db = 0    !! none     |residue mangement data
+        integer :: rsdmgtop_db = 0    !! none     |residue management data
         integer :: bmpuserop_db = 0   !! none     |user defined upland CP removal
         integer :: cond = 0           !! none     |conditional data
         integer :: initop_db = 0      !! none     |initial.str
@@ -52,8 +52,8 @@
         integer :: wndfiles = 0       !! none     |max wind files included in the wnd.cli
         integer :: cal_parms = 0      !! none     |max number of calibration parameters in cal_parms_upd
         integer :: cal_upd = 0        !! none     |max number of calibration parameter updates
-        integer :: sched_up = 0       !! none     |max number of scheduled updates (paramters, structures, land_use_mgt)
-        integer :: cond_up = 0        !! none     |max number of conditional updates (paramters, structures, land_use_mgt)
+        integer :: sched_up = 0       !! none     |max number of scheduled updates (parameters, structures, land_use_mgt)
+        integer :: cond_up = 0        !! none     |max number of conditional updates (parameters, structures, land_use_mgt)
         integer :: d_tbl = 0          !! none     |max number of decision tables
         integer :: dtbl_lum = 0       !! none     |max number of decision tables
         integer :: dtbl_res = 0       !! none     |max number of decision tables
@@ -99,6 +99,8 @@
         integer :: ch_sed = 0
         integer :: ch_nut = 0
         integer :: ch_temp = 0
+        integer :: shf = 0
+        integer :: w_temp = 0
         integer :: path = 0
         integer :: exco = 0
         integer :: exco_om = 0
@@ -135,10 +137,22 @@
         integer :: mallo_db = 0
         integer :: transplant = 0
         integer :: pudl_db = 0
-        integer :: recall_max = 0
+        integer :: recalldb_max = 0
         integer :: object_prt = 0
         integer :: ctbl_res = 0
         integer :: ch_sednut = 0
+        integer :: sat_buff = 0
+        integer :: canal = 0
+        integer :: pipe = 0
+        integer :: wtp = 0
+        integer :: treat = 0
+        integer :: uses = 0
+        integer :: stor = 0
+        integer :: om_treat = 0
+        integer :: om_use = 0
+        integer :: out_src = 0
+        integer :: out_rcv = 0
+        integer :: manure_om = 0     !! none     |number of manure organic matter types in manure_om.frt
       end type data_files_max_elements
       type (data_files_max_elements), save :: db_mx
                                  

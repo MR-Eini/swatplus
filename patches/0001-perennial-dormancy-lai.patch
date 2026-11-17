@@ -1,0 +1,21 @@
+diff --git a/src/pl_dormant.f90 b/src/pl_dormant.f90
+index b258435..be441a5 100644
+--- a/src/pl_dormant.f90
++++ b/src/pl_dormant.f90
+@@ -37,6 +37,9 @@
+           !! lower lai by same ratio
+           lai_init = pcom(j)%plg(ipl)%lai
+           pcom(j)%plg(ipl)%lai = rto * lai_init
++          ! Preserve dormant LAI without creating canopy or changing biomass transfers.
++          pcom(j)%plg(ipl)%lai = max (pcom(j)%plg(ipl)%lai, &
++              min (lai_init, pldb(idp)%alai_min))
+           !! compute leaf biomass drop
+           leaf_drop%m = rto * pl_mass(j)%leaf(ipl)%m
+           leaf_drop%n = leaf_drop%m * pcom(j)%plm(ipl)%n_fr
+@@ -94,4 +97,4 @@
+       end if    ! end of dormant period
+ 
+       return
+-      end subroutine pl_dormant
+\ No newline at end of file
++      end subroutine pl_dormant

@@ -9,6 +9,10 @@
       
       implicit none
 
+      
+      
+      
+      external :: soil_nutcarb_write
       real :: sep_opt = 0.              !                |
       real :: filt_w = 0.               !                |
       real :: grwat_veg = 0.            !                |
@@ -31,7 +35,7 @@
                                         !                |areas 
       real :: urbcoef = 0.              !1/mm            |wash-off coefficient for removal of
                                         !                |constituents from an impervious surface
-      real :: urbcn2 = 0.               ! none           |moisture condiction II curve number for imp areas
+      real :: urbcn2 = 0.               ! none           |moisture conduction II curve number for imp areas
       real :: vp = 0.                   !                |  
 
 !!  septic changes 6/07/10  jaehak
@@ -73,4 +77,4 @@
       wfsh = 0.
 
       return
-      end
+      end subroutine zero1

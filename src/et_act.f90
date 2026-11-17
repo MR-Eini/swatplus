@@ -65,7 +65,7 @@
                                  !              |plant cover    
       real :: pet = 0.           !mm H2O        |amount of PET remaining after water stored
                                  !              |in canopy is evaporated
-      real :: esleft = 0.        !mm H2O        |potenial soil evap that is still available
+      real :: esleft = 0.        !mm H2O        |potential soil evap that is still available
       real :: evzp = 0.          !              |
       real :: eosl = 0.          !mm H2O        |maximum amount of evaporation that can occur
                                  !              |from soil profile
@@ -124,7 +124,7 @@
         eaj = 0.
         es_max = 0.
         eos1 = 0.
-        cover = pl_mass(j)%ab_gr_com%m + soil1(j)%rsd(1)%m
+        cover = pl_mass(j)%ab_gr_com%m + pl_mass(j)%rsd_tot%m
         if (hru(j)%sno_mm >= 0.5) then
           eaj = 0.5
         else

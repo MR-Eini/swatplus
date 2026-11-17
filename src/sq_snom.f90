@@ -2,7 +2,7 @@
       
 !!    ~ ~ ~ PURPOSE ~ ~ ~
 !!    this subroutine predicts daily snom melt when the average air
-!!    temperature exceeds 0 degrees Celcius
+!!    temperature exceeds 0 degrees Celsius
 
 !!    ~ ~ ~ INCOMING VARIABLES ~ ~ ~
 !!    name         |units         |definition
@@ -43,6 +43,8 @@
                             !           |cover ground completely 
       real :: snocov = 0.   !none       |fraction of HRU area covered with snow
       real :: snotmp = 0.   !deg C      |temperature of snow pack
+
+      snotmp = 0.
 
       j = ihru
 
