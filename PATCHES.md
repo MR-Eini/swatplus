@@ -4,8 +4,11 @@ Baseline: upstream tag [`62.0.0`](https://github.com/swat-model/swatplus/release
 commit `de210d64db4f1d75e110bd6af33ea9c333d27b8a`.
 Primary branch: `MR-Eini/swatplus:main`.
 Original fix branch: `MR-Eini/swatplus:swatplus-62.0.0`.
-Current build identifier: `62.0.0-create.2` (a candidate identifier, not an upstream release).
+Current build identifier: `62.0.0-create.3` (a candidate identifier, not an upstream release).
 The earlier `create.1` includes the two perennial fixes but retains the output-record limit fixed below.
+`create.2` also fixes that output limit; `create.3` adds explicit closed-reservoir handling.
+`create.3` additionally contains the channel numerical/temperature fixes below,
+found while validating the closed-reservoir case with runtime checks enabled.
 
 The source files already contain these fixes. The files under `patches/`
 are copies for review or application to a clean baseline; do not apply them
@@ -86,6 +89,79 @@ the OPEN statement from `proc_bsn` and the diagnostic WRITE block from
 `hyd_connect`. A synthetic object with 15,136 incoming routing units writes
 1,195,820 bytes under local GNU Fortran 14.3.0, preserving every incoming ID.
 The same test against the unmodified source fails at the old record limit.
+
+## 4. Handle intentionally closed reservoirs without release tables
+
+Sources: `src/res_control.f90`, `src/res_read.f90`, `src/command.f90`.
+Patch: `patches/0004-closed-reservoir-null-release.patch`.
+
+An explicit `rel = null` can be intentional for a closed reservoir with no
+surface outlet. Previously, reservoir control unconditionally selected table
+zero and called `conditions`, which assigns to its unallocated `act_hit` array.
+
+The new explicit null branch does not evaluate a decision table and leaves
+controlled surface outflow at zero. It retains the common storage,
+precipitation, evaporation, seepage and water-quality calculations, and calls
+the existing sediment routine. A previous lagged surface release is reset to
+zero. Recharge-only links (`aqu`, `rhg`) remain eligible for the existing
+groundwater routing; no new surface release is invented.
+The command dispatcher also processes reservoirs with no incoming objects,
+so their precipitation, evaporation and seepage balances are not skipped.
+
+The branch is accepted only when there are no outgoing links or all outgoing
+links are aquifer recharge. A null reservoir with any other outlet is rejected
+explicitly. A misspelled/unmatched named decision table still fails rather
+than being silently treated as a closed reservoir. Explicit `null`/`NULL`
+references no longer produce the reader's misleading "not found" diagnostic.
+Existing named decision-table and conditional-table release paths are retained.
+
+The focused regression compiles the actual release-control and common
+water-balance blocks with fixture data. It checks zero surface release,
+precipitation/evaporation/seepage and storage, sediment calls, no inherited
+lagged outflow, recharge-only outlets, named release paths, and explicit
+rejection of surface-outlet nulls and unknown table names. It also compiles
+the actual reservoir dispatch block and checks zero-inflow daily processing. This implements
+intentional closed-reservoir inputs; it does not assign or calibrate release
+rules in a user's model files.
+
+## 5. Avoid negligible underflows in channel decay calculations
+
+Sources: `src/wq_semianalyt.f90`, `src/sd_channel_sediment3.f90`.
+Patch: `patches/0005-channel-decay-underflow.patch`.
+
+In QUAL2E, `exp_w` may return a safe normal number that underflows when
+multiplied by an already small concentration. The two concentration products
+are now evaluated in double precision and set to zero if their magnitude is
+below the normal single-precision range before conversion. Normal products
+retain their single-precision rounding; the governing equation and exp_w
+clamps are unchanged. No floating-point runtime traps are disabled.
+
+The floodplain trapping and channel vegetation decay terms now use the
+existing `utils::exp_w` wrapper rather than raw EXP. For very large positive
+decay arguments, this takes the intended zero-exponential limit without
+raising underflow. Tests compile the actual QUAL2E function, utils module and
+sediment expressions with underflow trapping enabled. They check small-product
+decay, meaningful incoming concentration, ordinary analytic solutions, zero
+concentration, large floodplain/vegetation decay and normal-range results.
+
+## 6. Mix channel tributary temperatures without index zero
+
+Source: `src/ch_temp.f90`.
+Patch: `patches/0006-channel-tributary-temperature.patch`.
+
+The old loop accessed `hin_d(in-1)` when the first incoming object was a
+channel, producing an index-zero bounds error. It also assumed at most two
+adjacent tributaries and reset their mixture when a routing unit appeared
+later in the list. The new loop accumulates temperature times nonnegative
+flow over all incoming channel tributaries, then divides by their total flow.
+Local routing units are still collected separately for the later component
+mixing stage. The existing air-temperature fallback and near-zero-flow
+threshold are retained. Headwater objects no longer call SIZE on an
+unallocated incoming-object array.
+
+The regression compiles the actual count/mixing block and checks a channel
+at incoming index one, three tributaries interspersed with a routing unit,
+reordered inflows, zero-flow fallback and unallocated headwater inflows.
 
 ## Validation and remaining work
 

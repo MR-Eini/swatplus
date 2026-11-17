@@ -188,6 +188,15 @@ if(Python3_Interpreter_FOUND AND CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     add_test(NAME Large_area_record
         COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/output_records/run_regressions.py
             --compiler ${CMAKE_Fortran_COMPILER})
+    add_test(NAME Closed_reservoir
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/closed_reservoirs/run_regressions.py
+            --compiler ${CMAKE_Fortran_COMPILER})
+    add_test(NAME Water_quality_decay
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/water_quality/run_regressions.py
+            --compiler ${CMAKE_Fortran_COMPILER})
+    add_test(NAME Channel_tributary_temperature
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/test/channel_temperature/run_regressions.py
+            --compiler ${CMAKE_Fortran_COMPILER})
 endif()
 # add_test(Ithaca_sub6 python3 ${check_py} ${exe_path} ${ref_dir}/Ithaca_sub6 ${test_dir} ${aerr} ${rerr})
 

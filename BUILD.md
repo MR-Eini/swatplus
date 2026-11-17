@@ -25,11 +25,14 @@ Linux example:
 
 ```bash
 cmake -S . -B build -DCMAKE_Fortran_COMPILER=gfortran \
-  -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.2
+  -DCMAKE_BUILD_TYPE=Release -DTAG=62.0.0-create.3
 cmake --build build --parallel 4
 python3 test/perennial/run_regressions.py --compiler gfortran
 python3 test/output_records/run_regressions.py --compiler gfortran
-ctest --test-dir build -R '^(Perennial_initialization|Large_area_record)$' --output-on-failure --no-tests=error
+python3 test/closed_reservoirs/run_regressions.py --compiler gfortran
+python3 test/water_quality/run_regressions.py --compiler gfortran
+python3 test/channel_temperature/run_regressions.py --compiler gfortran
+ctest --test-dir build -R '^(Perennial_initialization|Large_area_record|Closed_reservoir|Water_quality_decay|Channel_tributary_temperature)$' --output-on-failure --no-tests=error
 ```
 
 Windows PowerShell example with gfortran and mingw32-make on PATH:
@@ -37,11 +40,14 @@ Windows PowerShell example with gfortran and mingw32-make on PATH:
 ```powershell
 cmake -S . -B build -G 'MinGW Makefiles' `
   '-DCMAKE_Fortran_COMPILER=gfortran' `
-  '-DCMAKE_BUILD_TYPE=Release' '-DTAG=62.0.0-create.2'
+  '-DCMAKE_BUILD_TYPE=Release' '-DTAG=62.0.0-create.3'
 cmake --build build --parallel 4
 python test/perennial/run_regressions.py --compiler gfortran
 python test/output_records/run_regressions.py --compiler gfortran
-ctest --test-dir build -R '^(Perennial_initialization|Large_area_record)$' --output-on-failure --no-tests=error
+python test/closed_reservoirs/run_regressions.py --compiler gfortran
+python test/water_quality/run_regressions.py --compiler gfortran
+python test/channel_temperature/run_regressions.py --compiler gfortran
+ctest --test-dir build -R '^(Perennial_initialization|Large_area_record|Closed_reservoir|Water_quality_decay|Channel_tributary_temperature)$' --output-on-failure --no-tests=error
 ```
 
 Quote the complete `-DTAG=...` argument in PowerShell. Rtools' MSYS make
@@ -49,17 +55,17 @@ can instead use `-G 'MSYS Makefiles'` and an explicit
 `-DCMAKE_MAKE_PROGRAM=.../usr/bin/make.exe`. If CMake does not find Python,
 set `-DPython3_EXECUTABLE=.../python.exe` to register the focused CTest.
 
-The current binary name includes `62.0.0-create.2`, the compiler and the platform.
+The current binary name includes `62.0.0-create.3`, the compiler and the platform.
 Do not label a GNU build `ifo` (Intel Fortran Classic).
 
 `create.2` removes the explicit 80,000-character record limit for
 `area_calc.out`. A synthetic 15,136-inflow case exercises the actual OPEN
 and WRITE statements and fails against the original limit. All existing
-compiler checks remain enabled. Model inputs must still supply valid
-reservoir release references: a `null`/unmatched reservoir release is logged
-as not found by `res_read` and can subsequently fail in `conditions` when
-the missing decision table is used. Do not silently substitute a release
-rule merely to get a run to finish; the rule changes simulated outflows.
+compiler checks remain enabled. `create.3` additionally supports intentional
+`rel = null` for closed reservoirs with no outlets or only aquifer-recharge
+links. Their surface release is zero while the normal water balance remains
+active. It does not replace nulls with a drawdown rule. Unknown named tables
+and null reservoirs with surface outlets are rejected explicitly.
 
 ### Verified comparison with the official Windows executable
 
@@ -105,7 +111,7 @@ Run an isolated, one-year copy of bundled Ames inputs with a newly built
 executable (substitute the actual platform-specific binary name):
 
 ```bash
-python3 test/perennial/run_smoke.py --exe build/swatplus-62.0.0-create.2-gnu-lin_x86_64-Rel --require-console
+python3 test/perennial/run_smoke.py --exe build/swatplus-62.0.0-create.3-gnu-lin_x86_64-Rel --require-console
 ```
 
 The driver removes copied completion markers and logs, runs only the first
